@@ -82,20 +82,21 @@
         .stat-label { font-size: 0.65rem; font-weight: 600; color: #8A6DAD; }
         .stat-value { font-size: 1rem; font-weight: 800; color: #3C2A55; }
         
-        .action-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; justify-content: center; }
-        .btn { padding: 10px 16px; border: none; border-radius: 44px; font-weight: 700; font-size: 0.8rem; background: white; cursor: pointer; flex: 1; min-width: 100px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: 0.08s linear; }
+        .action-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 20px; justify-content: center; }
+        .btn { padding: 10px 12px; border: none; border-radius: 44px; font-weight: 700; font-size: 0.75rem; background: white; cursor: pointer; flex: 1; min-width: 85px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: 0.08s linear; }
         .btn:active { transform: scale(0.97); }
         .btn-primary { background: #B29CD6; color: #2E1A47; }
         .btn-sale { background: #FFE0F0; color: #8B3D62; }
         .btn-personal { background: #D6E8FF; color: #2E5A7C; }
+        .btn-club { background: #C8E6E0; color: #2E5A4C; }
         .btn-exchange { background: #FFF0D6; color: #A5672C; }
         .btn-danger { background: #FFE0E5; color: #BB3B5C; }
         .btn-excel { background: #D9E6DB; color: #2C5A2E; }
         .btn-report { background: #E6D9FF; color: #5B3A7C; }
         .btn-whatsapp { background: #25D366; color: white; }
         
-        .filter-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 10px; justify-content: center; }
-        .filter-btn { padding: 6px 12px; border-radius: 30px; border: none; background: #EEE4FF; font-size: 0.7rem; font-weight: 600; cursor: pointer; }
+        .filter-buttons { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 10px; justify-content: center; }
+        .filter-btn { padding: 6px 10px; border-radius: 30px; border: none; background: #EEE4FF; font-size: 0.7rem; font-weight: 600; cursor: pointer; }
         .filter-btn.active { background: #C2ABE0; color: white; }
         
         .search-box input { width: 100%; padding: 10px 16px; border-radius: 40px; border: 1px solid #DDCEFF; background: white; font-size: 0.9rem; margin-bottom: 14px; outline: none; }
@@ -175,6 +176,7 @@
         <div class="action-buttons">
             <button class="btn btn-primary" id="incomeMassBtn">➕ ПРИХОД</button>
             <button class="btn btn-sale" id="saleMassBtn">📤 ПРОДАЖА</button>
+            <button class="btn btn-club" id="clubWriteOffBtn">🎪 КЛУБ</button>
             <button class="btn btn-personal" id="personalWriteOffBtn">📦 ЛИЧНОЕ</button>
             <button class="btn btn-exchange" id="exchangeBtn">🔄 ЗАМЕНА</button>
         </div>
@@ -190,6 +192,7 @@
             <button class="filter-btn" data-filter="main">🏠 Основной</button>
             <button class="filter-btn" data-filter="income">⬆️ Приход</button>
             <button class="filter-btn" data-filter="sale">📤 Продажи</button>
+            <button class="filter-btn" data-filter="club">🎪 Клуб</button>
             <button class="filter-btn" data-filter="personal">🎁 Личное</button>
             <button class="filter-btn" data-filter="exchange">🔄 Обмен</button>
         </div>
@@ -203,7 +206,8 @@
             <button class="btn btn-excel" id="exportStockBtn">📊 Excel: Остатки</button>
             <button class="btn btn-excel" id="exportIncomeBtn">📊 Excel: Приходы</button>
             <button class="btn btn-excel" id="exportSaleBtn">📊 Excel: Продажи</button>
-            <button class="btn btn-report" id="monthlyReportBtn">📊 Отчёты по месяцам</button>
+            <button class="btn btn-excel" id="exportPersonalBtn">📊 Excel: Личное</button>
+            <button class="btn btn-excel" id="exportClubBtn">📊 Excel: Клуб</button>
         </div>
         <div class="backup-buttons">
             <button class="btn btn-primary" id="backupSaveBtn">💾 Резервная копия</button>
@@ -433,6 +437,7 @@
         if(discountPercent === 35) return prod.price35;
         if(discountPercent === 25) return prod.price25;
         if(discountPercent === 15) return prod.retail * 0.85;
+        if(discountPercent === 50) return prod.svPrice; // для клуба
         return prod.retail;
     }
 
@@ -462,13 +467,13 @@
             totalPoints += item.totalPoints;
             totalIncome += (item.totalPrice - (item.svPrice * item.qty));
             if(type === 'ПРОДАЖА' && discountPercent === 0) retailAdded += item.totalPrice;
-            if(type === 'ПРОДАЖА' && discountPercent !== null && discountPercent > 0) {
+            if(type === 'ПРОДАЖА' && discountPercent !== null && discountPercent > 0 && discountPercent !== 50) {
                 const inc = (getPriceByDiscount(products.find(p=>p.sku===item.sku), discountPercent) - item.svPrice) * item.qty;
                 companyIncome += inc;
             }
         });
         if(type === 'ПРОДАЖА' && discountPercent === 0) retailIncomeTotal += retailAdded;
-        if(type === 'ПРОДАЖА' && discountPercent !== null && discountPercent > 0) companyCheckTotal += companyIncome;
+        if(type === 'ПРОДАЖА' && discountPercent !== null && discountPercent > 0 && discountPercent !== 50) companyCheckTotal += companyIncome;
         
         const op = {
             id: Date.now(),
@@ -503,7 +508,7 @@
                     if(op.discountPercent === 0 && op.totalSum) retailIncomeTotal -= op.totalSum;
                     if(op.discountPercent !== null && op.discountPercent > 0 && op.totalIncome) companyCheckTotal -= op.totalIncome;
                 }
-                else if(op.type === 'ЛИЧНОЕ') {
+                else if(op.type === 'ЛИЧНОЕ' || op.type === 'КЛУБ') {
                     stock[item.sku] = (stock[item.sku] || 0) + item.qty;
                 }
                 else if(op.type === 'ОБМЕН') {
@@ -530,6 +535,7 @@
         else if(op.type === 'ОСНОВНОЙ СКЛАД') confirmMessage += `🏠 ОСНОВНОЙ СКЛАД: ${op.title}\n\nСклад вернётся в состояние ДО добавления`;
         else if(op.type === 'ПРОДАЖА') confirmMessage += `📤 ПРОДАЖА: ${op.title}\n\nСклад вернётся в состояние ДО продажи (товары вернутся)`;
         else if(op.type === 'ЛИЧНОЕ') confirmMessage += `🎁 ЛИЧНОЕ СПИСАНИЕ: ${op.title}\n\nСклад вернётся в состояние ДО списания`;
+        else if(op.type === 'КЛУБ') confirmMessage += `🎪 КЛУБ: ${op.title}\n\nСклад вернётся в состояние ДО списания для клуба`;
         else if(op.type === 'ОБМЕН') confirmMessage += `🔄 ОБМЕН: ${op.title}\n\nСклад вернётся в состояние ДО обмена`;
         else confirmMessage += `${op.title}\n\nСклад вернётся в состояние ДО операции`;
         
@@ -604,19 +610,43 @@
         });
     }
 
-    function showPersonalWriteOff() {
+    function showClubWriteOff() {
         let html = '';
         products.forEach(p => {
             html += `<div class="modal-product-row"><span class="modal-product-name">${p.name} (${p.sku}) [в наличии: ${stock[p.sku]||0}]</span><input type="number" id="qty_${p.sku}" class="modal-qty-input" value="0" min="0" step="1"></div>`;
         });
-        showCustomModal('📦 ЛИЧНОЕ СПИСАНИЕ', html, () => {
+        showCustomModal('🎪 СПИСАНИЕ ДЛЯ КЛУБА (скидка 50% - закупочная цена)', html, () => {
             const items = [];
             let canProceed = true;
             products.forEach(p => {
                 const qty = parseInt(document.getElementById(`qty_${p.sku}`).value) || 0;
                 if(qty > 0) {
                     if((stock[p.sku]||0) < qty) { alert(`Не хватает ${p.name}`); canProceed = false; return; }
-                    items.push({ name: p.name, qty: qty, sku: p.sku, svPrice: p.svPrice, totalPrice: 0, totalPoints: 0 });
+                    const price = p.svPrice; // 50% скидка = цена СВ
+                    items.push({ name: p.name, qty: qty, sku: p.sku, svPrice: p.svPrice, totalPrice: price * qty, totalPoints: p.vp * qty });
+                }
+            });
+            if(!canProceed) return;
+            items.forEach(item => { stock[item.sku] -= item.qty; });
+            addOperation('КЛУБ', `СПИСАНИЕ ДЛЯ КЛУБА`, items, 50);
+            computeStats();
+            renderProducts();
+        });
+    }
+
+    function showPersonalWriteOff() {
+        let html = '';
+        products.forEach(p => {
+            html += `<div class="modal-product-row"><span class="modal-product-name">${p.name} (${p.sku}) [в наличии: ${stock[p.sku]||0}]</span><input type="number" id="qty_${p.sku}" class="modal-qty-input" value="0" min="0" step="1"></div>`;
+        });
+        showCustomModal('📦 ЛИЧНОЕ СПИСАНИЕ (полная стоимость для отчёта)', html, () => {
+            const items = [];
+            let canProceed = true;
+            products.forEach(p => {
+                const qty = parseInt(document.getElementById(`qty_${p.sku}`).value) || 0;
+                if(qty > 0) {
+                    if((stock[p.sku]||0) < qty) { alert(`Не хватает ${p.name}`); canProceed = false; return; }
+                    items.push({ name: p.name, qty: qty, sku: p.sku, svPrice: p.svPrice, totalPrice: 0, totalPoints: p.vp * qty });
                 }
             });
             if(!canProceed) return;
@@ -840,6 +870,7 @@
         if(currentFilter === "main") filtered = operations.filter(op => op.type === "ОСНОВНОЙ СКЛАД");
         else if(currentFilter === "income") filtered = operations.filter(op => op.type === "ПРИХОД");
         else if(currentFilter === "sale") filtered = operations.filter(op => op.type === "ПРОДАЖА");
+        else if(currentFilter === "club") filtered = operations.filter(op => op.type === "КЛУБ");
         else if(currentFilter === "personal") filtered = operations.filter(op => op.type === "ЛИЧНОЕ");
         else if(currentFilter === "exchange") filtered = operations.filter(op => op.type === "ОБМЕН");
         const container = document.getElementById('historyLog');
@@ -964,7 +995,94 @@
         }, 100);
     }
 
-    // ======================= РЕЗЕРВНОЕ КОПИРОВАНИЕ =======================
+    // ======================= ВЫГРУЗКА В EXCEL (CSV) С ОБЩИМИ ИТОГАМИ =======================
+    function downloadCSV(filename, rows, headers, totals = null) {
+        let csv = headers.join(",") + "\n";
+        rows.forEach(row => {
+            csv += row.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",") + "\n";
+        });
+        if(totals) {
+            csv += "\n" + totals.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",") + "\n";
+        }
+        const blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+    
+    function exportStock() {
+        const rows = products.filter(p => (stock[p.sku]||0) > 0).map(p => [
+            p.name, p.sku, stock[p.sku], p.vp, p.svPrice, p.retail, (stock[p.sku]*p.svPrice).toFixed(2), (stock[p.sku]*p.retail).toFixed(2)
+        ]);
+        if(!rows.length) { alert("Нет товаров на складе"); return; }
+        let totalQty = 0, totalSv = 0, totalRet = 0, totalVp = 0;
+        rows.forEach(r => { totalQty += r[2]; totalSv += parseFloat(r[6]); totalRet += parseFloat(r[7]); totalVp += r[3] * r[2]; });
+        const totals = [`ИТОГО`, ``, totalQty, totalVp.toFixed(1), totalSv.toFixed(2), totalRet.toFixed(2), totalSv.toFixed(2), totalRet.toFixed(2)];
+        downloadCSV("остатки_склада.csv", rows, ["Товар","SKU","Кол-во","VP/шт","Цена СВ","Розница","Общая СВ","Общая розница"], totals);
+    }
+    
+    function exportIncome() {
+        const rows = operations.filter(op => op.type === "ПРИХОД").flatMap(op => {
+            if(op.items && op.items.length) {
+                return op.items.map(item => [op.date, item.name, item.qty, item.totalPoints || 0, 0, 0]);
+            }
+            return [[op.date, op.title, "", "", "", ""]];
+        });
+        if(!rows.length) { alert("Нет приходов"); return; }
+        let totalQty = 0, totalVp = 0;
+        rows.forEach(r => { totalQty += r[2] || 0; totalVp += r[3] || 0; });
+        const totals = [`ИТОГО`, ``, totalQty, totalVp.toFixed(1), ``, ``];
+        downloadCSV("приходы.csv", rows, ["Дата","Товар","Кол-во","Очки VP","Сумма (СВ)","Сумма (розница)"], totals);
+    }
+    
+    function exportSale() {
+        // Группируем по чеку (id операции)
+        const saleOps = operations.filter(op => op.type === "ПРОДАЖА");
+        const rows = [];
+        saleOps.forEach(op => {
+            let itemsText = '';
+            if(op.items && op.items.length) {
+                itemsText = op.items.map(item => `${item.name} ×${item.qty}`).join('; ');
+            }
+            rows.push([op.date, op.clientName || "", op.discountPercent+"%", itemsText, op.totalSum?.toFixed(2) || "0", op.totalPoints?.toFixed(1) || "0", op.totalIncome?.toFixed(2) || "0"]);
+        });
+        if(!rows.length) { alert("Нет продаж"); return; }
+        let totalSum = 0, totalVp = 0, totalIncome = 0;
+        rows.forEach(r => { totalSum += parseFloat(r[4]) || 0; totalVp += parseFloat(r[5]) || 0; totalIncome += parseFloat(r[6]) || 0; });
+        const totals = [`ИТОГО`, ``, ``, ``, totalSum.toFixed(2), totalVp.toFixed(1), totalIncome.toFixed(2)];
+        downloadCSV("продажи.csv", rows, ["Дата","Клиент","Скидка","Товары","Сумма","Очки VP","Ваш доход"], totals);
+    }
+    
+    function exportPersonal() {
+        const rows = operations.filter(op => op.type === "ЛИЧНОЕ").flatMap(op => {
+            if(op.items && op.items.length) {
+                return op.items.map(item => [op.date, item.name, item.qty, item.totalPoints || 0, 0]);
+            }
+            return [[op.date, op.title, "", "", ""]];
+        });
+        if(!rows.length) { alert("Нет личного списания"); return; }
+        let totalQty = 0, totalVp = 0;
+        rows.forEach(r => { totalQty += r[2] || 0; totalVp += r[3] || 0; });
+        const totals = [`ИТОГО`, ``, totalQty, totalVp.toFixed(1), ``];
+        downloadCSV("личное_списание.csv", rows, ["Дата","Товар","Кол-во","Очки VP","Сумма (по СВ)"], totals);
+    }
+    
+    function exportClub() {
+        const rows = operations.filter(op => op.type === "КЛУБ").flatMap(op => {
+            if(op.items && op.items.length) {
+                return op.items.map(item => [op.date, item.name, item.qty, item.totalPoints || 0, (item.svPrice * item.qty).toFixed(2)]);
+            }
+            return [[op.date, op.title, "", "", ""]];
+        });
+        if(!rows.length) { alert("Нет списания для клуба"); return; }
+        let totalQty = 0, totalVp = 0, totalSum = 0;
+        rows.forEach(r => { totalQty += r[2] || 0; totalVp += r[3] || 0; totalSum += parseFloat(r[4]) || 0; });
+        const totals = [`ИТОГО`, ``, totalQty, totalVp.toFixed(1), totalSum.toFixed(2)];
+        downloadCSV("клуб_списание.csv", rows, ["Дата","Товар","Кол-во","Очки VP","Сумма (по СВ)"], totals);
+    }
+    
     function backupSave() {
         const data = {
             stock: stock,
@@ -1016,29 +1134,6 @@
         input.click();
     }
 
-    function downloadCSV(filename, rows, headers) {
-        let csv = headers.join(",")+"\n";
-        rows.forEach(row => { csv += row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")+"\n"; });
-        const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8;"});
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.click();
-        URL.revokeObjectURL(link.href);
-    }
-    function exportStock() {
-        const rows = products.filter(p=>(stock[p.sku]||0)>0).map(p=>[p.name, p.sku, stock[p.sku], p.vp, p.svPrice, p.retail, (stock[p.sku]*p.svPrice).toFixed(2)]);
-        if(!rows.length) { alert("Нет товаров"); return; }
-        downloadCSV("остатки_склада.csv", rows, ["Товар","SKU","Кол-во","VP","Цена СВ","Розница","Общая СВ"]);
-    }
-    function exportIncome() {
-        const rows = operations.filter(op=>op.type==="ПРИХОД").flatMap(op => op.items ? op.items.map(item => [op.date, `+${item.qty} x ${item.name}`]) : [[op.date, op.title]]);
-        downloadCSV("приходы.csv", rows, ["Дата","Описание"]);
-    }
-    function exportSale() {
-        const rows = operations.filter(op=>op.type==="ПРОДАЖА").flatMap(op => op.items ? op.items.map(item => [op.date, op.clientName || "", op.discountPercent+"%", item.name, item.qty, item.totalPrice, op.totalIncome]) : [[op.date, op.title, "", "", "", "", ""]]);
-        downloadCSV("продажи.csv", rows, ["Дата","Клиент","Скидка","Товар","Кол-во","Сумма","Ваш доход"]);
-    }
     function resetAll() {
         if(confirm("❗ ОЧИСТИТЬ ВСЁ? Склад и история будут удалены без возврата.")) {
             products.forEach(p=>stock[p.sku]=0);
@@ -1054,13 +1149,15 @@
 
     document.getElementById('incomeMassBtn')?.addEventListener('click', showMassIncome);
     document.getElementById('saleMassBtn')?.addEventListener('click', showMassSale);
+    document.getElementById('clubWriteOffBtn')?.addEventListener('click', showClubWriteOff);
     document.getElementById('personalWriteOffBtn')?.addEventListener('click', showPersonalWriteOff);
     document.getElementById('exchangeBtn')?.addEventListener('click', exchange);
     document.getElementById('resetBtn')?.addEventListener('click', resetAll);
     document.getElementById('exportStockBtn')?.addEventListener('click', exportStock);
     document.getElementById('exportIncomeBtn')?.addEventListener('click', exportIncome);
     document.getElementById('exportSaleBtn')?.addEventListener('click', exportSale);
-    document.getElementById('monthlyReportBtn')?.addEventListener('click', showMonthlyReport);
+    document.getElementById('exportPersonalBtn')?.addEventListener('click', exportPersonal);
+    document.getElementById('exportClubBtn')?.addEventListener('click', exportClub);
     document.getElementById('backupSaveBtn')?.addEventListener('click', backupSave);
     document.getElementById('backupLoadBtn')?.addEventListener('click', backupLoad);
     document.getElementById('searchInput')?.addEventListener('input', () => renderProducts());
