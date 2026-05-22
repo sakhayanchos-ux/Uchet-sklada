@@ -511,10 +511,18 @@
                 stock[item.sku] = (stock[item.sku] || 0) + item.qty;
             }
             else if(op.type === 'ОБМЕН') {
+                // Для обмена: если action === 'give' — возвращаем отданное, если 'take' — забираем полученное
                 if(item.action === 'give') {
                     stock[item.sku] = (stock[item.sku] || 0) + item.qty;
                 } else if(item.action === 'take') {
                     stock[item.sku] = (stock[item.sku] || 0) - item.qty;
+                } else {
+                    // Если action нет (старая версия), пробуем определить по наличию
+                    // Это для совместимости со старыми операциями
+                    if(item.qty > 0) {
+                        // Не можем точно определить, поэтому пропускаем
+                        console.warn("Невозможно откатить обмен без action");
+                    }
                 }
             }
         });
@@ -530,11 +538,11 @@ function deleteOperation(opId) {
     const op = operations[index];
     
     let confirmMessage = `Удалить операцию?\n\n`;
-    if(op.type === 'ПРИХОД') confirmMessage += `📦 ПРИХОД: ${op.title}\n\nСклад вернётся в состояние ДО прихода`;
-    else if(op.type === 'ОСНОВНОЙ СКЛАД') confirmMessage += `🏠 ОСНОВНОЙ СКЛАД: ${op.title}\n\nСклад вернётся в состояние ДО добавления`;
-    else if(op.type === 'ПРОДАЖА') confirmMessage += `📤 ПРОДАЖА: ${op.title}\n\nСклад вернётся в состояние ДО продажи`;
-    else if(op.type === 'ЛИЧНОЕ') confirmMessage += `🎁 ЛИЧНОЕ СПИСАНИЕ: ${op.title}\n\nСклад вернётся в состояние ДО списания`;
-    else if(op.type === 'ОБМЕН') confirmMessage += `🔄 ОБМЕН: ${op.title}\n\nСклад вернётся в состояние ДО обмена`;
+    if(op.type === 'ПРИХОД') confirmMessage += `📦 ПРИХОД: ${op.title}\n\nСклад вернётся в состояние ДО прихода (товары вычтутся)`;
+    else if(op.type === 'ОСНОВНОЙ СКЛАД') confirmMessage += `🏠 ОСНОВНОЙ СКЛАД: ${op.title}\n\nСклад вернётся в состояние ДО добавления (товары вычтутся)`;
+    else if(op.type === 'ПРОДАЖА') confirmMessage += `📤 ПРОДАЖА: ${op.title}\n\nСклад вернётся в состояние ДО продажи (товары вернутся)`;
+    else if(op.type === 'ЛИЧНОЕ') confirmMessage += `🎁 ЛИЧНОЕ СПИСАНИЕ: ${op.title}\n\nСклад вернётся в состояние ДО списания (товары вернутся)`;
+    else if(op.type === 'ОБМЕН') confirmMessage += `🔄 ОБМЕН: ${op.title}\n\nСклад вернётся в состояние ДО обмена (отданное вернётся, полученное уйдёт)`;
     else confirmMessage += `${op.title}\n\nСклад вернётся в состояние ДО операции`;
     
     if(confirm(confirmMessage)) {
@@ -547,7 +555,6 @@ function deleteOperation(opId) {
         alert(`✅ Операция удалена, склад восстановлен`);
     }
 }
-
     function showCustomModal(title, contentHtml, onConfirm) {
         const modal = document.createElement('div');
         modal.className = 'modal-overlay';
