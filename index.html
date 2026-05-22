@@ -490,37 +490,63 @@
     }
 
     function reverseOperation(op) {
-        if(op.items && op.items.length) {
-            op.items.forEach(item => {
-                if(op.type === 'ПРИХОД' || op.type === 'ОСНОВНОЙ СКЛАД') {
-                    stock[item.sku] = (stock[item.sku] || 0) - item.qty;
-                } else if(op.type === 'ПРОДАЖА') {
-                    stock[item.sku] = (stock[item.sku] || 0) + item.qty;
-                    if(op.discountPercent === 0 && op.totalSum) retailIncomeTotal -= op.totalSum;
-                    if(op.discountPercent !== null && op.discountPercent > 0 && op.totalIncome) companyCheckTotal -= op.totalIncome;
-                } else if(op.type === 'ЛИЧНОЕ') {
-                    stock[item.sku] = (stock[item.sku] || 0) + item.qty;
+    if(op.items && op.items.length) {
+        op.items.forEach(item => {
+            if(op.type === 'ПРИХОД') {
+                stock[item.sku] = (stock[item.sku] || 0) - item.qty;
+            } 
+            else if(op.type === 'ОСНОВНОЙ СКЛАД') {
+                stock[item.sku] = (stock[item.sku] || 0) - item.qty;
+            }
+            else if(op.type === 'ПРОДАЖА') {
+                stock[item.sku] = (stock[item.sku] || 0) + item.qty;
+                if(op.discountPercent === 0 && op.totalSum) {
+                    retailIncomeTotal -= op.totalSum;
                 }
-            });
-        }
+                if(op.discountPercent !== null && op.discountPercent > 0 && op.totalIncome) {
+                    companyCheckTotal -= op.totalIncome;
+                }
+            }
+            else if(op.type === 'ЛИЧНОЕ') {
+                stock[item.sku] = (stock[item.sku] || 0) + item.qty;
+            }
+            else if(op.type === 'ОБМЕН') {
+                if(item.action === 'give') {
+                    stock[item.sku] = (stock[item.sku] || 0) + item.qty;
+                } else if(item.action === 'take') {
+                    stock[item.sku] = (stock[item.sku] || 0) - item.qty;
+                }
+            }
+        });
+    }
+    saveAll();
+    computeStats();
+    renderProducts();
+}
+
+function deleteOperation(opId) {
+    const index = operations.findIndex(op => op.id === opId);
+    if(index === -1) return;
+    const op = operations[index];
+    
+    let confirmMessage = `Удалить операцию?\n\n`;
+    if(op.type === 'ПРИХОД') confirmMessage += `📦 ПРИХОД: ${op.title}\n\nСклад вернётся в состояние ДО прихода`;
+    else if(op.type === 'ОСНОВНОЙ СКЛАД') confirmMessage += `🏠 ОСНОВНОЙ СКЛАД: ${op.title}\n\nСклад вернётся в состояние ДО добавления`;
+    else if(op.type === 'ПРОДАЖА') confirmMessage += `📤 ПРОДАЖА: ${op.title}\n\nСклад вернётся в состояние ДО продажи`;
+    else if(op.type === 'ЛИЧНОЕ') confirmMessage += `🎁 ЛИЧНОЕ СПИСАНИЕ: ${op.title}\n\nСклад вернётся в состояние ДО списания`;
+    else if(op.type === 'ОБМЕН') confirmMessage += `🔄 ОБМЕН: ${op.title}\n\nСклад вернётся в состояние ДО обмена`;
+    else confirmMessage += `${op.title}\n\nСклад вернётся в состояние ДО операции`;
+    
+    if(confirm(confirmMessage)) {
+        reverseOperation(op);
+        operations.splice(index, 1);
         saveAll();
         computeStats();
         renderProducts();
+        renderHistory();
+        alert(`✅ Операция удалена, склад восстановлен`);
     }
-
-    function deleteOperation(opId) {
-        const index = operations.findIndex(op => op.id === opId);
-        if(index === -1) return;
-        const op = operations[index];
-        if(confirm(`Удалить операцию?\n\n${op.title}\n\nСклад вернётся в состояние ДО неё`)) {
-            reverseOperation(op);
-            operations.splice(index, 1);
-            saveAll();
-            computeStats();
-            renderProducts();
-            renderHistory();
-        }
-    }
+}
 
     function showCustomModal(title, contentHtml, onConfirm) {
         const modal = document.createElement('div');
@@ -757,10 +783,17 @@
             return;
         }
         
+        // Проводим обмен
         stock[outSku] -= outQty;
         stock[inSku] = (stock[inSku] || 0) + inQty;
         
-        addOperation('ОБМЕН', `ОБМЕН: отдал ${outQty}x ${outProd.name}, получил ${inQty}x ${inProd.name}. Доплата: ${extra}₽. ${finalMessage}`, []);
+        // Сохраняем в операцию оба товара с пометкой give/take для правильного отката
+        const items = [
+            { name: outProd.name, qty: outQty, sku: outSku, svPrice: outProd.svPrice, totalPrice: 0, totalPoints: 0, action: 'give' },
+            { name: inProd.name, qty: inQty, sku: inSku, svPrice: inProd.svPrice, totalPrice: 0, totalPoints: 0, action: 'take' }
+        ];
+        
+        addOperation('ОБМЕН', `ОБМЕН: отдал ${outQty}x ${outProd.name}, получил ${inQty}x ${inProd.name}. Доплата: ${extra}₽. ${finalMessage}`, items);
         
         computeStats();
         renderProducts();
@@ -770,7 +803,6 @@
     
     modal.querySelector('#exchangeCancelBtn').onclick = () => modal.remove();
 }
-
     function addMainStock(sku) {
         const prod = products.find(p=>p.sku===sku);
         if(!prod) return;
