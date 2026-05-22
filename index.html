@@ -475,7 +475,7 @@
         items.forEach(item => {
             totalSum += item.totalPrice;
             totalPoints += item.totalPoints;
-            totalIncome += (item.totalPrice - (item.svPrice * item.qty));
+            totalIncome += getIncomeByDiscount(products.find(p=>p.sku===item.sku), discountPercent, item.qty);
             if(type === 'ПРОДАЖА' && discountPercent === 0) retailAdded += item.totalPrice;
             if(type === 'ПРОДАЖА' && discountPercent !== null && discountPercent > 0 && discountPercent !== 50) {
                 companyIncome += getIncomeByDiscount(products.find(p=>p.sku===item.sku), discountPercent, item.qty);
@@ -898,7 +898,12 @@
                 op.items.forEach(item => { itemsHtml += `<div style="margin-left:12px;">• ${item.name} × ${item.qty}</div>`; });
                 itemsHtml += '</div>';
             }
-            html += `<div class="history-entry"><button class="delete-op-btn" data-id="${op.id}">🗑️</button><div class="history-type">🕒 ${op.date} — ${op.type}</div><div class="history-details"><strong>${op.title}</strong>${itemsHtml}${op.totalSum ? `<div>💰 Итого: ${op.totalSum.toFixed(2)} ₽</div>` : ''}${op.totalPoints ? `<div>⭐ Очки: ${op.totalPoints.toFixed(1)}</div>` : ''}${op.totalIncome ? `<div>💚 Твой доход: ~${op.totalIncome.toFixed(2)} ₽</div>` : ''}</div></div>`;
+            // Для ПРИХОДА не показываем доход
+            let incomeHtml = '';
+            if(op.type === 'ПРОДАЖА' && op.totalIncome) {
+                incomeHtml = `<div>💚 Твой доход: ~${op.totalIncome.toFixed(2)} ₽</div>`;
+            }
+            html += `<div class="history-entry"><button class="delete-op-btn" data-id="${op.id}">🗑️</button><div class="history-type">🕒 ${op.date} — ${op.type}</div><div class="history-details"><strong>${op.title}</strong>${itemsHtml}${op.totalSum ? `<div>💰 Итого: ${op.totalSum.toFixed(2)} ₽</div>` : ''}${op.totalPoints ? `<div>⭐ Очки: ${op.totalPoints.toFixed(1)}</div>` : ''}${incomeHtml}</div></div>`;
         });
         container.innerHTML = html;
         document.querySelectorAll('.delete-op-btn').forEach(btn => btn.onclick = () => deleteOperation(parseInt(btn.dataset.id)));
@@ -930,7 +935,7 @@
                         months[key].sum += op.totalSum || 0;
                         if (op.discountPercent === 0) {
                             months[key].retailIncome += op.totalSum || 0;
-                        } else if (op.discountPercent > 0) {
+                        } else if (op.discountPercent > 0 && op.discountPercent !== 50) {
                             months[key].companyIncome += op.totalIncome || 0;
                         }
                         months[key].count++;
@@ -1010,7 +1015,7 @@
         }, 100);
     }
 
-    // ======================= ВЫГРУЗКА В EXCEL (CSV) С ОБЩИМИ ИТОГАМИ =======================
+    // ======================= ВЫГРУЗКА В EXCEL (CSV) =======================
     function downloadCSV(filename, rows, headers, totals = null) {
         let csv = headers.join(",") + "\n";
         rows.forEach(row => {
