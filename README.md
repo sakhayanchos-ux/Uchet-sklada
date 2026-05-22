@@ -1,1 +1,881 @@
-# Uchet-sklada
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
+    <title>СКЛАД Herbalife 🌿</title>
+    <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='85' font-size='85' text-anchor='middle' fill='%239b6b9e'%3E🌿%3C/text%3E%3C/svg%3E">
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(145deg, #E8DDFF 0%, #D9C9FF 50%, #C8B6FE 100%);
+            min-height: 100vh;
+            padding: 20px 12px 60px;
+        }
+        .app-container {
+            max-width: 750px;
+            margin: 0 auto;
+            background: rgba(255, 255, 255, 0.96);
+            border-radius: 40px;
+            padding: 20px 16px 28px;
+            box-shadow: 0 8px 28px rgba(100, 70, 140, 0.15);
+        }
+        h1 { font-size: 1.8rem; font-weight: 700; text-align: center; color: #5B3A7C; margin-bottom: 4px; cursor: pointer; }
+        .sub { text-align: center; color: #7B5F9E; font-size: 0.75rem; margin-bottom: 20px; border-bottom: 1px solid #E2D5FF; padding-bottom: 8px; }
+        
+        .stats-grid { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; }
+        .stat-card { flex: 1; background: #F9F5FF; border-radius: 28px; padding: 10px 5px; text-align: center; border: 1px solid #DDCEFF; min-width: 100px; }
+        .stat-label { font-size: 0.65rem; font-weight: 600; color: #8A6DAD; }
+        .stat-value { font-size: 1rem; font-weight: 800; color: #3C2A55; }
+        
+        .action-buttons { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 20px; justify-content: center; }
+        .btn { padding: 10px 16px; border: none; border-radius: 44px; font-weight: 700; font-size: 0.8rem; background: white; cursor: pointer; flex: 1; min-width: 100px; box-shadow: 0 1px 3px rgba(0,0,0,0.08); transition: 0.08s linear; }
+        .btn:active { transform: scale(0.97); }
+        .btn-primary { background: #B29CD6; color: #2E1A47; }
+        .btn-sale { background: #FFE0F0; color: #8B3D62; }
+        .btn-personal { background: #D6E8FF; color: #2E5A7C; }
+        .btn-exchange { background: #FFF0D6; color: #A5672C; }
+        .btn-danger { background: #FFE0E5; color: #BB3B5C; }
+        .btn-excel { background: #D9E6DB; color: #2C5A2E; }
+        .btn-report { background: #E6D9FF; color: #5B3A7C; }
+        .btn-whatsapp { background: #25D366; color: white; }
+        
+        .filter-buttons { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0 10px; justify-content: center; }
+        .filter-btn { padding: 6px 12px; border-radius: 30px; border: none; background: #EEE4FF; font-size: 0.7rem; font-weight: 600; cursor: pointer; }
+        .filter-btn.active { background: #C2ABE0; color: white; }
+        
+        .search-box input { width: 100%; padding: 10px 16px; border-radius: 40px; border: 1px solid #DDCEFF; background: white; font-size: 0.9rem; margin-bottom: 14px; outline: none; }
+        
+        .product-list { max-height: 400px; overflow-y: auto; background: #FEFCF7; border-radius: 32px; padding: 6px; margin-bottom: 18px; border: 1px solid #F0E8FF; }
+        .product-item { display: flex; justify-content: space-between; align-items: center; padding: 10px 8px; border-bottom: 1px solid #EDE3FF; flex-wrap: wrap; gap: 8px; }
+        .product-info { flex: 2; min-width: 150px; }
+        .product-name { font-weight: 700; font-size: 0.85rem; color: #382753; }
+        .product-stock { font-size: 0.7rem; background: #EEE4FF; padding: 2px 8px; border-radius: 30px; display: inline-block; }
+        .out-of-stock { background: #FFE8F0; color: #C45A7A; }
+        .icon-btn { background: #EEE4FF; border: none; font-size: 1rem; width: 36px; height: 36px; border-radius: 30px; cursor: pointer; margin: 0 2px; }
+        
+        .history-log { background: #FDFAFF; border-radius: 32px; padding: 12px; max-height: 320px; overflow-y: auto; margin: 12px 0; border: 1px solid #EBE0FF; }
+        .history-entry { background: white; border-radius: 24px; padding: 10px; margin-bottom: 10px; border-left: 4px solid #C2ABE0; position: relative; }
+        .history-type { font-weight: 800; font-size: 0.7rem; color: #7B5F9E; }
+        .history-details { font-size: 0.7rem; margin-top: 6px; line-height: 1.4; }
+        .delete-op-btn { position: absolute; top: 8px; right: 8px; background: none; border: none; font-size: 1rem; cursor: pointer; color: #BB3B5C; padding: 4px 8px; border-radius: 20px; }
+        .delete-op-btn:hover { background: #FFE0E5; }
+        
+        .bottom-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
+        .backup-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 8px; }
+        footer { font-size: 0.65rem; text-align: center; margin-top: 16px; color: #8E76AD; }
+        
+        .modal-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.5); backdrop-filter: blur(4px); display: flex; align-items: center; justify-content: center; z-index: 1000; visibility: hidden; opacity: 0; transition: 0.2s; }
+        .modal-overlay.active { visibility: visible; opacity: 1; }
+        .modal-card { background: white; width: 92%; max-width: 550px; border-radius: 40px; padding: 20px; max-height: 80vh; overflow-y: auto; }
+        .modal-product-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .modal-product-name { flex: 2; font-size: 0.75rem; }
+        .modal-qty-input { width: 70px; padding: 6px; border-radius: 30px; border: 1px solid #DDCEFF; text-align: center; }
+        .modal-buttons { display: flex; gap: 12px; margin-top: 16px; }
+        .confirm-delete { background: white; border-radius: 32px; padding: 20px; text-align: center; max-width: 300px; }
+        .month-select { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 16px; }
+        .month-btn { padding: 8px 12px; border-radius: 30px; border: none; background: #EEE4FF; cursor: pointer; }
+        .month-btn.active { background: #C2ABE0; color: white; }
+        .admin-panel { background: #F0E8FF; border-radius: 32px; padding: 16px; margin-bottom: 16px; }
+        .key-result { font-family: monospace; font-size: 1.2rem; font-weight: bold; background: white; padding: 8px; border-radius: 16px; text-align: center; margin: 10px 0; }
+        .contact-info { background: #E8F5E9; border-radius: 32px; padding: 16px; margin-top: 20px; text-align: center; border: 1px solid #A5D6A7; }
+        .whatsapp-btn { background: #25D366; color: white; border: none; border-radius: 40px; padding: 12px 20px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
+    </style>
+</head>
+<body>
+<div class="app-container" id="app">
+    <div id="licenseScreen" style="display:flex; flex-direction:column; text-align:center; padding:20px;">
+        <h2>🌿 СКЛАД Herbalife</h2>
+        <p style="margin: 20px 0 10px;">🔐 Активация</p>
+        <p>Код устройства:<br><strong id="deviceCode" style="font-size:1.2rem; background:#EEE4FF; padding:8px; border-radius:20px; display:inline-block; margin:10px 0;"></strong></p>
+        <p style="font-size:0.8rem;">Отправьте этот код продавцу, чтобы получить ключ</p>
+        
+        <!-- КОНТАКТНАЯ ИНФОРМАЦИЯ ДЛЯ СВЯЗИ -->
+        <div class="contact-info" id="contactBlock">
+            <p style="margin-bottom:8px;">📞 Свяжитесь со мной для получения ключа:</p>
+            <a href="Wa.me/+79142609616" id="whatsappLink" target="_blank">
+                <button class="whatsapp-btn">📲 Написать в WhatsApp</button>
+            </a>
+            <p style="margin-top:10px; font-size:0.7rem; color:#666;">Напишите мне этот код, и я пришлю ключ активации</p>
+        </div>
+        
+        <input type="text" id="licenseKeyInput" placeholder="Введите ключ" style="width:100%; padding:12px; border-radius:30px; border:1px solid #DDCEFF; margin:10px 0; text-align:center;">
+        <button class="btn btn-primary" id="activateBtn" style="margin-top:5px;">Активировать</button>
+        <div id="adminLoginPanel" style="margin-top:20px; border-top:1px solid #DDCEFF; padding-top:15px;">
+            <p style="font-size:0.7rem; color:#8A6DAD;"></p>
+        </div>
+    </div>
+    <div id="mainApp" style="display:none;">
+        <h1 id="mainHeader">🌿 СКЛАД Herbalife</h1>
+        <div class="sub">Супервайзер | полный ассортимент + учёт</div>
+
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">📦 Товары</div><div class="stat-value" id="statSku">0</div></div>
+            <div class="stat-card"><div class="stat-label">⭐ Очки (VP)</div><div class="stat-value" id="statPoints">0</div></div>
+            <div class="stat-card"><div class="stat-label">💰 Закуп (СВ)</div><div class="stat-value" id="statWholesale">0</div></div>
+            <div class="stat-card"><div class="stat-label">🏷️ Розница</div><div class="stat-value" id="statRetail">0</div></div>
+            <div class="stat-card"><div class="stat-label">💸 Доход розница</div><div class="stat-value" id="statIncome">0 ₽</div></div>
+            <div class="stat-card"><div class="stat-label">🧾 Чек от компании</div><div class="stat-value" id="statCompanyCheck">0 ₽</div></div>
+            <div class="stat-card"><div class="stat-label">📅 Доход за месяц</div><div class="stat-value" id="statMonthlyIncome">0 ₽</div></div>
+        </div>
+
+        <div class="action-buttons">
+            <button class="btn btn-primary" id="incomeMassBtn">➕ ПРИХОД</button>
+            <button class="btn btn-sale" id="saleMassBtn">📤 ПРОДАЖА</button>
+            <button class="btn btn-personal" id="personalWriteOffBtn">📦 ЛИЧНОЕ</button>
+            <button class="btn btn-exchange" id="exchangeBtn">🔄 ЗАМЕНА</button>
+        </div>
+
+        <div class="search-box">
+            <input type="text" id="searchInput" placeholder="🔍 Найти товар по названию или SKU...">
+        </div>
+
+        <div class="product-list" id="productList"></div>
+
+        <div class="filter-buttons" id="filterButtons">
+            <button class="filter-btn active" data-filter="all">📋 Все</button>
+            <button class="filter-btn" data-filter="main">🏠 Основной</button>
+            <button class="filter-btn" data-filter="income">⬆️ Приход</button>
+            <button class="filter-btn" data-filter="sale">📤 Продажи</button>
+            <button class="filter-btn" data-filter="personal">🎁 Личное</button>
+            <button class="filter-btn" data-filter="exchange">🔄 Обмен</button>
+        </div>
+
+        <div class="history-log" id="historyLog">
+            <div style="text-align:center; padding:16px;">📜 История операций</div>
+        </div>
+
+        <div class="bottom-buttons">
+            <button class="btn btn-danger" id="resetBtn">🗑️ ОЧИСТИТЬ ВСЁ</button>
+            <button class="btn btn-excel" id="exportStockBtn">📊 Excel: Остатки</button>
+            <button class="btn btn-excel" id="exportIncomeBtn">📊 Excel: Приходы</button>
+            <button class="btn btn-excel" id="exportSaleBtn">📊 Excel: Продажи</button>
+            <button class="btn btn-report" id="monthlyReportBtn">📊 Отчёты по месяцам</button>
+        </div>
+        <div class="backup-buttons">
+            <button class="btn btn-primary" id="backupSaveBtn">💾 Резервная копия</button>
+            <button class="btn btn-primary" id="backupLoadBtn">📂 Восстановить</button>
+        </div>
+        <footer>🌿 Нажмите 5 раз на заголовок для входа в админ-панель</footer>
+    </div>
+</div>
+
+<script>
+    // ======================= ССЫЛКА ДЛЯ СВЯЗИ (твоя WhatsApp invite) =======================
+    const WHATSAPP_INVITE_LINK = "https://wa.me/message/TD45SYRF66AEK1";
+    // ================================================================================
+    
+    // Функция для обновления (оставляем для совместимости)
+    function updateWhatsAppLink() {
+        // Ссылка уже стоит в HTML
+    }
+    
+    // ======================= ЛИЦЕНЗИЯ =======================
+    let adminMode = false;
+    
+    function getDeviceId() {
+        let id = localStorage.getItem("device_id");
+        if(!id) {
+            id = Math.random().toString(36).substring(2, 10).toUpperCase() + '-' + 
+                 Math.random().toString(36).substring(2, 6).toUpperCase() + '-' +
+                 Math.random().toString(36).substring(2, 6).toUpperCase();
+            localStorage.setItem("device_id", id);
+        }
+        return id;
+    }
+    
+    function checkLicense() {
+        const licensed = localStorage.getItem("licensed");
+        if(licensed === "true") return true;
+        const deviceId = getDeviceId();
+        document.getElementById("deviceCode").innerText = deviceId;
+        document.getElementById("licenseScreen").style.display = "flex";
+        document.getElementById("mainApp").style.display = "none";
+        return false;
+    }
+    
+    function generateKeyForDevice(deviceCode) {
+        let hash = 0;
+        for(let i = 0; i < deviceCode.length; i++) {
+            hash = ((hash << 5) - hash) + deviceCode.charCodeAt(i);
+            hash |= 0;
+        }
+        hash = Math.abs(hash);
+        const key = hash.toString(36).substring(0, 15).toUpperCase();
+        return key;
+    }
+    
+    function validateKey(deviceCode, userKey) {
+        const expectedKey = generateKeyForDevice(deviceCode);
+        return userKey === expectedKey;
+    }
+    
+    function activateLicense(key) {
+        const deviceId = getDeviceId();
+        if(validateKey(deviceId, key)) {
+            localStorage.setItem("licensed", "true");
+            return true;
+        }
+        return false;
+    }
+    
+    document.getElementById("activateBtn")?.addEventListener("click", () => {
+        const key = document.getElementById("licenseKeyInput").value.trim().toUpperCase();
+        if(activateLicense(key)) {
+            location.reload();
+        } else {
+            alert("❌ Неверный ключ");
+        }
+    });
+    
+    // ======================= АДМИН-ПАНЕЛЬ (5 кликов по заголовку) =======================
+    let clickCount = 0;
+    let clickTimer = null;
+    
+    function showAdminPanel() {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-card">
+                <h3>🔐 Админ-панель</h3>
+                <div class="admin-panel">
+                    <label>Код устройства покупателя:</label>
+                    <input type="text" id="adminDeviceCode" placeholder="Например: X7G9-4K2L-M1N8" style="width:100%; margin:10px 0; padding:10px;">
+                    <button class="btn btn-primary" id="adminGenerateBtn" style="width:100%;">🔑 Сгенерировать ключ</button>
+                    <div id="adminKeyResult" class="key-result" style="display:none;"></div>
+                    <hr style="margin:15px 0;">
+                    <p style="font-size:0.7rem; color:#666;">Сгенерированный ключ отправьте покупателю. Каждый ключ уникален для каждого устройства.</p>
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn" id="adminCloseBtn">Закрыть</button>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        setTimeout(() => modal.classList.add('active'), 10);
+        
+        modal.querySelector('#adminGenerateBtn').onclick = () => {
+            const deviceCode = modal.querySelector('#adminDeviceCode').value.trim().toUpperCase();
+            if(deviceCode.length < 10) {
+                alert("Введите корректный код устройства (например, X7G9-4K2L-M1N8)");
+                return;
+            }
+            const key = generateKeyForDevice(deviceCode);
+            const resultDiv = modal.querySelector('#adminKeyResult');
+            resultDiv.innerHTML = `✅ Ключ для устройства:<br><strong style="font-size:1.3rem;">${key}</strong><br>Отправьте его покупателю`;
+            resultDiv.style.display = 'block';
+        };
+        
+        modal.querySelector('#adminCloseBtn').onclick = () => modal.remove();
+    }
+    
+    function setupAdminAccess() {
+        const header = document.getElementById('mainHeader') || document.querySelector('h1');
+        if(header) {
+            header.onclick = () => {
+                clickCount++;
+                if(clickTimer) clearTimeout(clickTimer);
+                clickTimer = setTimeout(() => { clickCount = 0; }, 1000);
+                if(clickCount >= 5) {
+                    clickCount = 0;
+                    const masterCode = prompt("🔐 Введите мастер-код для входа в админ-панель:");
+                    if(masterCode === "HERBALIFE2026") {
+                        showAdminPanel();
+                    } else if(masterCode) {
+                        alert("❌ Неверный мастер-код");
+                    }
+                }
+            };
+        }
+    }
+    
+    // ======================= ПОЛНЫЙ ПРАЙС-ЛИСТ =======================
+    const products = [
+        { name: "Коктейль Формула 1 - Куриный крем-суп", sku: "395К", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, retail: 3819 },
+        { name: "Коктейль Формула 1 - Ваниль", sku: "500К", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, retail: 3819 },
+        { name: "Коктейль Формула 1 - Кокос", sku: "0930", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, retail: 3819 },
+        { name: "Коктейль Формула 1 - Банан в карамели", sku: "326К", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, retail: 3819 },
+        { name: "Коктейль Формула 1 - Манго", sku: "102К", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, retail: 3819 },
+        { name: "Коктейль Формула 1 - Дыня", sku: "2793", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, retail: 3819 },
+        { name: "Коктейль Формула 1 - Клубника", sku: "501К", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, retail: 3819 },
+        { name: "Коктейль Формула 1 - Нежный шоколад", sku: "4468", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, retail: 3819 },
+        { name: "Коктейль Формула 1 - Хрустящее печенье", sku: "4467", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, retail: 3819 },
+        { name: "Коктейль Формула 1 - Дыня 2 кг", sku: "005К", vp: 99.60, svPrice: 7055.26, price42: 7927.41, price35: 8690.55, price25: 9780.74, retail: 14111 },
+        { name: "Протеиновый кофе Латте Макиато", sku: "012К", vp: 23.95, svPrice: 2196.00, price42: 2402.33, price35: 2582.86, price25: 2840.77, retail: 4392 },
+        { name: "Вечерний Коктейль Формула 1", sku: "1636", vp: 20.15, svPrice: 1604.30, price42: 1802.62, price35: 1976.16, price25: 2224.06, retail: 3209 },
+        { name: "Формула 3 Белковый специализированный", sku: "0242", vp: 17.95, svPrice: 1627.48, price42: 1828.73, price35: 2004.83, price25: 2256.39, retail: 3255 },
+        { name: "Протеиновая смесь для выпечки", sku: "528К", vp: 20.00, svPrice: 1770.22, price42: 1934.58, price35: 2078.39, price25: 2283.84, retail: 3540 },
+        { name: "Травяной напиток Классический 51г", sku: "178К", vp: 19.95, svPrice: 1384.70, price42: 1555.89, price35: 1705.68, price25: 1919.67, retail: 2769 },
+        { name: "Травяной напиток Лимон 51г", sku: "180К", vp: 19.95, svPrice: 1384.70, price42: 1555.89, price35: 1705.68, price25: 1919.67, retail: 2769 },
+        { name: "Травяной напиток Малина 51г", sku: "182К", vp: 19.95, svPrice: 1384.70, price42: 1555.89, price35: 1705.68, price25: 1919.67, retail: 2769 },
+        { name: "Травяной напиток Манго-питахайя 51г", sku: "530К", vp: 19.95, svPrice: 1384.70, price42: 1555.89, price35: 1705.68, price25: 1919.67, retail: 2769 },
+        { name: "Травяной напиток Классический 102г", sku: "179К", vp: 34.95, svPrice: 2583.96, price42: 2903.31, price35: 3182.74, price25: 3581.92, retail: 5168 },
+        { name: "Алоэ Манго", sku: "0757", vp: 24.95, svPrice: 1731.18, price42: 1945.12, price35: 2132.32, price25: 2399.74, retail: 3462 },
+        { name: "Алоэ Классика", sku: "0006", vp: 24.95, svPrice: 1731.18, price42: 1945.12, price35: 2132.32, price25: 2399.74, retail: 3462 },
+        { name: "Алоэ Клюква", sku: "1189", vp: 24.95, svPrice: 1731.18, price42: 1945.12, price35: 2132.32, price25: 2399.74, retail: 3462 },
+        { name: "Овсяно-яблочный напиток", sku: "2864", vp: 22.95, svPrice: 1669.57, price42: 1875.99, price35: 2056.62, price25: 2314.65, retail: 3339 },
+        { name: "Комплекс пищевых волокон", sku: "2865", vp: 22.95, svPrice: 1669.57, price42: 1875.99, price35: 2056.62, price25: 2314.65, retail: 3339 },
+        { name: "Протеиновый батончик Лимонный (14 шт)", sku: "0260", vp: 7.70, svPrice: 1399.34, price42: 1466.49, price35: 1525.24, price25: 1609.18, retail: 2799 },
+        { name: "Батончик ваниль в хрустящей карамели (28 шт)", sku: "001К", vp: 9.24, svPrice: 1678.72, price42: 1759.34, price35: 1829.88, price25: 1930.65, retail: 3357 },
+        { name: "Батончик лимон в хрустящей карамели (28 шт)", sku: "002К", vp: 9.24, svPrice: 1678.72, price42: 1759.34, price35: 1829.88, price25: 1930.65, retail: 3357 },
+        { name: "Батончик F1 Экспресс Тёмный шоколад (7 шт)", sku: "4472", vp: 14.00, svPrice: 1094.34, price42: 1229.61, price35: 1347.98, price25: 1517.07, retail: 2189 },
+        { name: "Батончик F1 Экспресс Клюква и белый шоколад (7 шт)", sku: "4473", vp: 14.00, svPrice: 1094.34, price42: 1229.61, price35: 1347.98, price25: 1517.07, retail: 2189 },
+        { name: "Протеиновые чипсы Барбекю (10 шт)", sku: "141К", vp: 11.75, svPrice: 1413.98, price42: 1544.18, price35: 1658.10, price25: 1820.85, retail: 2828 },
+        { name: "Протеиновые чипсы Сметана и лук (10 шт)", sku: "142К", vp: 11.75, svPrice: 1413.98, price42: 1544.18, price35: 1658.10, price25: 1820.85, retail: 2828 },
+        { name: "Фильтр для воды", sku: "0265", vp: 20.00, svPrice: 2104.50, price42: 2223.77, price35: 2328.13, price25: 2477.21, retail: 4209 },
+        { name: "Сменный картридж для фильтра", sku: "0266", vp: 5.35, svPrice: 615.49, price42: 640.18, price35: 661.79, price25: 692.66, retail: 1231 },
+        { name: "Термо Комплит", sku: "0050", vp: 30.95, svPrice: 2253.34, price42: 2531.89, price35: 2775.62, price25: 3123.81, retail: 4507 },
+        { name: "Фито Комплит", sku: "236К", vp: 29.50, svPrice: 2475.99, price42: 2767.13, price35: 3021.88, price25: 3385.81, retail: 4952 },
+        { name: "Клеточный Активатор", sku: "3123", vp: 21.95, svPrice: 1610.40, price42: 1809.50, price35: 1983.72, price25: 2232.60, retail: 3221 },
+        { name: "Термоджеткис (желтые таблетки)", sku: "0117", vp: 20.50, svPrice: 1331.63, price42: 1496.28, price35: 1640.35, price25: 1846.17, retail: 2663 },
+        { name: "Cell-u-loss", sku: "0111", vp: 15.75, svPrice: 1360.30, price42: 1528.37, price35: 1675.43, price25: 1885.51, retail: 2721 },
+        { name: "Найтворкс", sku: "0036", vp: 75.00, svPrice: 4911.72, price42: 5489.90, price35: 5995.81, price25: 6718.54, retail: 9823 },
+        { name: "Коктейль H24 Восстановление силы", sku: "1437", vp: 43.00, svPrice: 2666.92, price42: 2931.81, price35: 3163.58, price25: 3494.69, retail: 5334 },
+        { name: "Грин Макс Селект", sku: "110К", vp: 38.91, svPrice: 3498.96, price42: 3818.31, price35: 4097.74, price25: 4496.92, retail: 6998 },
+        { name: "Найт Мод (новинка)", sku: "282К", vp: 37.45, svPrice: 2560.17, price42: 2876.49, price35: 3153.27, price25: 3548.68, retail: 5120 },
+        { name: "Коллаген Быоти Комплекс", sku: "076К", vp: 37.10, svPrice: 3248.86, price42: 3650.39, price35: 4001.72, price25: 4503.63, retail: 6498 },
+        { name: "Коллаген Быоти Комплекс (говяжий)", sku: "335К", vp: 37.10, svPrice: 3248.86, price42: 3650.39, price35: 4001.72, price25: 4503.63, retail: 6498 },
+        { name: "Микробиотик Макс", sku: "173К", vp: 27.10, svPrice: 2785.87, price42: 3130.30, price35: 3431.68, price25: 3862.22, retail: 5572 },
+        { name: "Гербалайфлайн Макс", sku: "0043", vp: 19.40, svPrice: 1545.74, price42: 1736.84, price35: 1904.05, price25: 2142.93, retail: 3091 },
+        { name: "Лифтофф апельсин", sku: "3151", vp: 15.95, svPrice: 1299.30, price42: 1459.95, price35: 1600.52, price25: 1801.33, retail: 2599 },
+        { name: "Шизандра Эдванс", sku: "0022", vp: 15.50, svPrice: 1144.36, price42: 1285.88, price35: 1409.71, price25: 1586.61, retail: 2289 },
+        { name: "Чай N-R-G", sku: "0102", vp: 14.75, svPrice: 1011.99, price42: 1137.02, price35: 1246.41, price25: 1402.70, retail: 2024 },
+        { name: "Формула 2 - для Мужчин", sku: "1745", vp: 13.55, svPrice: 1401.78, price42: 1575.12, price35: 1726.79, price25: 1943.46, retail: 2804 },
+        { name: "Формула 2 - для Женщин", sku: "1746", vp: 13.55, svPrice: 1401.78, price42: 1575.12, price35: 1726.79, price25: 1943.46, retail: 2804 },
+        { name: "CR7 - протеиновый коктейль", sku: "CR701", vp: 20.00, svPrice: 2100.00, price42: 2350.00, price35: 2550.00, price25: 2800.00, retail: 3500 },
+        { name: "Литература: каталог", sku: "LIT01", vp: 0, svPrice: 50, price42: 70, price35: 80, price25: 90, retail: 150 },
+        { name: "Литература: буклет", sku: "LIT02", vp: 0, svPrice: 30, price42: 50, price35: 60, price25: 70, retail: 100 },
+        { name: "Бумажный пакет", sku: "BAG01", vp: 0, svPrice: 20, price42: 35, price35: 45, price25: 55, retail: 80 }
+    ];
+
+    let stock = {};
+    let operations = [];
+    let retailIncomeTotal = 0;
+    let companyCheckTotal = 0;
+    let currentFilter = "all";
+
+    function loadData() {
+        const savedStock = localStorage.getItem("herba_stock");
+        if(savedStock) stock = JSON.parse(savedStock);
+        else products.forEach(p => stock[p.sku] = 0);
+        const savedOps = localStorage.getItem("herba_operations");
+        if(savedOps) operations = JSON.parse(savedOps);
+        const savedIncome = localStorage.getItem("retail_income");
+        retailIncomeTotal = savedIncome ? parseFloat(savedIncome) : 0;
+        const savedCompany = localStorage.getItem("company_check");
+        companyCheckTotal = savedCompany ? parseFloat(savedCompany) : 0;
+    }
+    function saveAll() {
+        localStorage.setItem("herba_stock", JSON.stringify(stock));
+        localStorage.setItem("herba_operations", JSON.stringify(operations));
+        localStorage.setItem("retail_income", retailIncomeTotal);
+        localStorage.setItem("company_check", companyCheckTotal);
+    }
+
+    function getPriceByDiscount(prod, discountPercent) {
+        if(discountPercent === 42) return prod.price42;
+        if(discountPercent === 35) return prod.price35;
+        if(discountPercent === 25) return prod.price25;
+        if(discountPercent === 15) return prod.retail * 0.85;
+        return prod.retail;
+    }
+
+    function getCurrentMonthIncome() {
+        const now = new Date();
+        const currentMonth = now.getMonth();
+        const currentYear = now.getFullYear();
+        let total = 0;
+        operations.forEach(op => {
+            if(op.type === "ПРОДАЖА" && op.totalIncome) {
+                let parts = op.date.split(',')[0].split('.');
+                if(parts.length === 3) {
+                    let date = new Date(parts[2], parts[1]-1, parts[0]);
+                    if(date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
+                        total += op.totalIncome;
+                    }
+                }
+            }
+        });
+        return total;
+    }
+
+    function addOperation(type, title, items, discountPercent = null, clientName = null) {
+        let totalSum = 0, totalPoints = 0, totalIncome = 0, companyIncome = 0, retailAdded = 0;
+        items.forEach(item => {
+            totalSum += item.totalPrice;
+            totalPoints += item.totalPoints;
+            totalIncome += (item.totalPrice - (item.svPrice * item.qty));
+            if(type === 'ПРОДАЖА' && discountPercent === 0) retailAdded += item.totalPrice;
+            if(type === 'ПРОДАЖА' && discountPercent !== null && discountPercent > 0) {
+                const inc = (getPriceByDiscount(products.find(p=>p.sku===item.sku), discountPercent) - item.svPrice) * item.qty;
+                companyIncome += inc;
+            }
+        });
+        if(type === 'ПРОДАЖА' && discountPercent === 0) retailIncomeTotal += retailAdded;
+        if(type === 'ПРОДАЖА' && discountPercent !== null && discountPercent > 0) companyCheckTotal += companyIncome;
+        
+        const op = {
+            id: Date.now(),
+            date: new Date().toLocaleString(),
+            type: type,
+            title: title,
+            items: items.map(i => ({ name: i.name, qty: i.qty, sku: i.sku, svPrice: i.svPrice, totalPrice: i.totalPrice })),
+            totalSum: totalSum,
+            totalPoints: totalPoints,
+            totalIncome: totalIncome,
+            discountPercent: discountPercent,
+            clientName: clientName
+        };
+        operations.unshift(op);
+        saveAll();
+        renderHistory();
+        computeStats();
+        return op;
+    }
+
+    function reverseOperation(op) {
+        if(op.items && op.items.length) {
+            op.items.forEach(item => {
+                if(op.type === 'ПРИХОД' || op.type === 'ОСНОВНОЙ СКЛАД') {
+                    stock[item.sku] = (stock[item.sku] || 0) - item.qty;
+                } else if(op.type === 'ПРОДАЖА') {
+                    stock[item.sku] = (stock[item.sku] || 0) + item.qty;
+                    if(op.discountPercent === 0 && op.totalSum) retailIncomeTotal -= op.totalSum;
+                    if(op.discountPercent !== null && op.discountPercent > 0 && op.totalIncome) companyCheckTotal -= op.totalIncome;
+                } else if(op.type === 'ЛИЧНОЕ') {
+                    stock[item.sku] = (stock[item.sku] || 0) + item.qty;
+                }
+            });
+        }
+        saveAll();
+        computeStats();
+        renderProducts();
+    }
+
+    function deleteOperation(opId) {
+        const index = operations.findIndex(op => op.id === opId);
+        if(index === -1) return;
+        const op = operations[index];
+        if(confirm(`Удалить операцию?\n\n${op.title}\n\nСклад вернётся в состояние ДО неё`)) {
+            reverseOperation(op);
+            operations.splice(index, 1);
+            saveAll();
+            computeStats();
+            renderProducts();
+            renderHistory();
+        }
+    }
+
+    function showCustomModal(title, contentHtml, onConfirm) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `<div class="modal-card"><h3>${title}</h3>${contentHtml}<div class="modal-buttons"><button class="btn btn-primary" id="modalConfirm">✅ Подтвердить</button><button class="btn" id="modalCancel">Отмена</button></div></div>`;
+        document.body.appendChild(modal);
+        setTimeout(() => modal.classList.add('active'), 10);
+        modal.querySelector('#modalConfirm').onclick = () => { if(onConfirm) onConfirm(); modal.remove(); };
+        modal.querySelector('#modalCancel').onclick = () => modal.remove();
+    }
+
+    function showMassIncome() {
+        let html = '';
+        products.forEach(p => {
+            html += `<div class="modal-product-row"><span class="modal-product-name">${p.name} (${p.sku})</span><input type="number" id="qty_${p.sku}" class="modal-qty-input" value="0" min="0" step="1"></div>`;
+        });
+        showCustomModal('➕ ПРИХОД товара', html, () => {
+            const items = [];
+            products.forEach(p => {
+                const qty = parseInt(document.getElementById(`qty_${p.sku}`).value) || 0;
+                if(qty > 0) {
+                    stock[p.sku] = (stock[p.sku]||0) + qty;
+                    items.push({ name: p.name, qty: qty, sku: p.sku, svPrice: p.svPrice, totalPrice: 0, totalPoints: p.vp * qty });
+                }
+            });
+            if(items.length) addOperation('ПРИХОД', `ПРИХОД (поставка)`, items);
+            computeStats();
+            renderProducts();
+        });
+    }
+
+    function showMassSale() {
+        let discountPercent = 0, clientName = '';
+        const step1Html = `<div><label>Скидка (%):</label><select id="discountSelect" style="width:100%"><option value="0">0% (розница)</option><option value="15">15%</option><option value="25">25%</option><option value="35">35%</option><option value="42">42%</option></select></div><div><label>Имя клиента:</label><input id="clientName" placeholder="Например: Саина"></div>`;
+        showCustomModal('📤 ПРОДАЖА - шаг 1', step1Html, () => {
+            discountPercent = parseInt(document.getElementById('discountSelect').value);
+            clientName = document.getElementById('clientName').value.trim() || 'Клиент';
+            let html = `<div style="margin-bottom:8px;"><strong>Скидка: ${discountPercent}% | Клиент: ${clientName}</strong></div>`;
+            products.forEach(p => {
+                html += `<div class="modal-product-row"><span class="modal-product-name">${p.name} (${p.sku}) [в наличии: ${stock[p.sku]||0}]</span><input type="number" id="qty_${p.sku}" class="modal-qty-input" value="0" min="0" step="1"></div>`;
+            });
+            showCustomModal('📤 ПРОДАЖА - шаг 2 (укажите количество)', html, () => {
+                const items = [];
+                let canProceed = true;
+                products.forEach(p => {
+                    const qty = parseInt(document.getElementById(`qty_${p.sku}`).value) || 0;
+                    if(qty > 0) {
+                        if((stock[p.sku]||0) < qty) { alert(`Не хватает ${p.name}`); canProceed = false; return; }
+                        const price = getPriceByDiscount(p, discountPercent);
+                        items.push({ name: p.name, qty: qty, sku: p.sku, svPrice: p.svPrice, totalPrice: price * qty, totalPoints: p.vp * qty });
+                    }
+                });
+                if(!canProceed) return;
+                items.forEach(item => { stock[item.sku] -= item.qty; });
+                addOperation('ПРОДАЖА', `ПРОДАЖА (скидка ${discountPercent}%) - ${clientName}`, items, discountPercent, clientName);
+                computeStats();
+                renderProducts();
+            });
+        });
+    }
+
+    function showPersonalWriteOff() {
+        let html = '';
+        products.forEach(p => {
+            html += `<div class="modal-product-row"><span class="modal-product-name">${p.name} (${p.sku}) [в наличии: ${stock[p.sku]||0}]</span><input type="number" id="qty_${p.sku}" class="modal-qty-input" value="0" min="0" step="1"></div>`;
+        });
+        showCustomModal('📦 ЛИЧНОЕ СПИСАНИЕ', html, () => {
+            const items = [];
+            let canProceed = true;
+            products.forEach(p => {
+                const qty = parseInt(document.getElementById(`qty_${p.sku}`).value) || 0;
+                if(qty > 0) {
+                    if((stock[p.sku]||0) < qty) { alert(`Не хватает ${p.name}`); canProceed = false; return; }
+                    items.push({ name: p.name, qty: qty, sku: p.sku, svPrice: p.svPrice, totalPrice: 0, totalPoints: 0 });
+                }
+            });
+            if(!canProceed) return;
+            items.forEach(item => { stock[item.sku] -= item.qty; });
+            addOperation('ЛИЧНОЕ', `ЛИЧНОЕ СПИСАНИЕ`, items);
+            computeStats();
+            renderProducts();
+        });
+    }
+
+    function exchange() {
+        const outSku = prompt("SKU товара, который отдаёте:");
+        const outProd = products.find(p=>p.sku===outSku);
+        if(!outProd) { alert("Не найден"); return; }
+        const outQty = parseInt(prompt(`Кол-во отдаваемого ${outProd.name}:`,"1"));
+        if((stock[outProd.sku]||0) < outQty) { alert("Недостаточно"); return; }
+        const inSku = prompt("SKU товара, который получаете:");
+        const inProd = products.find(p=>p.sku===inSku);
+        if(!inProd) { alert("Не найден"); return; }
+        const inQty = parseInt(prompt(`Кол-во получаемого ${inProd.name}:`,"1"));
+        let extra = parseFloat(prompt("Доплата (вы доплачиваете +, вам -):","0"));
+        if(isNaN(extra)) extra=0;
+        stock[outProd.sku] -= outQty;
+        stock[inProd.sku] = (stock[inProd.sku]||0) + inQty;
+        addOperation('ОБМЕН', `ОБМЕН: отдал ${outQty}x ${outProd.name}, получил ${inQty}x ${inProd.name}. Доплата: ${extra}₽`, []);
+        computeStats();
+        renderProducts();
+    }
+
+    function addMainStock(sku) {
+        const prod = products.find(p=>p.sku===sku);
+        if(!prod) return;
+        stock[sku] = (stock[sku]||0) + 1;
+        addOperation('ОСНОВНОЙ СКЛАД', `ОСНОВНОЙ СКЛАД: +1 x ${prod.name}`, [{ name: prod.name, qty: 1, sku: sku, svPrice: prod.svPrice, totalPrice: 0, totalPoints: 0 }]);
+        computeStats();
+        renderProducts();
+    }
+
+    function quickSale(sku) {
+        const prod = products.find(p=>p.sku===sku);
+        if(!prod || (stock[sku]||0) < 1) { alert("Нет на складе"); return; }
+        const step1Html = `<div><label>Скидка (%):</label><select id="discountSelect"><option value="0">0% (розница)</option><option value="15">15%</option><option value="25">25%</option><option value="35">35%</option><option value="42">42%</option></select></div><div><label>Имя клиента:</label><input id="clientName" placeholder="Имя"></div>`;
+        showCustomModal(`📤 Продажа: ${prod.name}`, step1Html, () => {
+            const discountPercent = parseInt(document.getElementById('discountSelect').value);
+            const clientName = document.getElementById('clientName').value.trim() || 'Клиент';
+            const price = getPriceByDiscount(prod, discountPercent);
+            const total = price;
+            stock[sku] -= 1;
+            addOperation('ПРОДАЖА', `ПРОДАЖА (скидка ${discountPercent}%) - ${clientName}`, [{ name: prod.name, qty: 1, sku: sku, svPrice: prod.svPrice, totalPrice: total, totalPoints: prod.vp }], discountPercent, clientName);
+            computeStats();
+            renderProducts();
+        });
+    }
+
+    function computeStats() {
+        let skuCount = 0, totalVP = 0, totalSv = 0, totalRet = 0, totalUnits = 0;
+        products.forEach(p => {
+            const q = stock[p.sku]||0;
+            if(q > 0) skuCount++;
+            totalUnits += q;
+            totalVP += p.vp * q;
+            totalSv += p.svPrice * q;
+            totalRet += p.retail * q;
+        });
+        document.getElementById('statSku').innerHTML = `${skuCount} <span style="font-size:0.7rem;">(${totalUnits} шт)</span>`;
+        document.getElementById('statPoints').innerText = totalVP.toFixed(1);
+        document.getElementById('statWholesale').innerText = totalSv.toFixed(0)+" ₽";
+        document.getElementById('statRetail').innerText = totalRet.toFixed(0)+" ₽";
+        document.getElementById('statIncome').innerText = retailIncomeTotal.toFixed(0)+" ₽";
+        document.getElementById('statCompanyCheck').innerText = companyCheckTotal.toFixed(0)+" ₽";
+        document.getElementById('statMonthlyIncome').innerText = getCurrentMonthIncome().toFixed(0)+" ₽";
+    }
+
+    function renderProducts() {
+        const search = document.getElementById('searchInput').value.toLowerCase();
+        const container = document.getElementById('productList');
+        let filtered = products.filter(p => p.name.toLowerCase().includes(search) || p.sku.toLowerCase().includes(search));
+        if(!filtered.length) { container.innerHTML = "<div style='padding:20px'>Нет товаров</div>"; return; }
+        let html = '';
+        filtered.forEach(p => {
+            const q = stock[p.sku]||0;
+            html += `<div class="product-item"><div class="product-info"><div class="product-name">${p.name} <span style="background:#DDCEFF;padding:2px 8px;border-radius:20px;font-size:0.7rem;">${p.sku}</span></div><div><span class="product-stock ${q===0?'out-of-stock':''}">📦 ${q} шт</span> ⭐ ${p.vp} VP</div><div style="font-size:0.7rem;">💰 СВ ${p.svPrice}₽ | розница ${p.retail}₽</div></div><div><button class="icon-btn" data-sku="${p.sku}" data-act="main">➕</button><button class="icon-btn" data-sku="${p.sku}" data-act="quick">📤</button></div></div>`;
+        });
+        container.innerHTML = html;
+        document.querySelectorAll('[data-act="main"]').forEach(btn => btn.onclick = () => addMainStock(btn.dataset.sku));
+        document.querySelectorAll('[data-act="quick"]').forEach(btn => btn.onclick = () => quickSale(btn.dataset.sku));
+    }
+
+    function renderHistory() {
+        let filtered = operations;
+        if(currentFilter === "main") filtered = operations.filter(op => op.type === "ОСНОВНОЙ СКЛАД");
+        else if(currentFilter === "income") filtered = operations.filter(op => op.type === "ПРИХОД");
+        else if(currentFilter === "sale") filtered = operations.filter(op => op.type === "ПРОДАЖА");
+        else if(currentFilter === "personal") filtered = operations.filter(op => op.type === "ЛИЧНОЕ");
+        else if(currentFilter === "exchange") filtered = operations.filter(op => op.type === "ОБМЕН");
+        const container = document.getElementById('historyLog');
+        if(!filtered.length) { container.innerHTML = "<div style='padding:20px;text-align:center'>📭 Нет операций</div>"; return; }
+        let html = '';
+        filtered.forEach(op => {
+            let itemsHtml = '';
+            if(op.items && op.items.length) {
+                itemsHtml = '<div style="margin-top:4px;">';
+                op.items.forEach(item => { itemsHtml += `<div style="margin-left:12px;">• ${item.name} × ${item.qty}</div>`; });
+                itemsHtml += '</div>';
+            }
+            html += `<div class="history-entry"><button class="delete-op-btn" data-id="${op.id}">🗑️</button><div class="history-type">🕒 ${op.date} — ${op.type}</div><div class="history-details"><strong>${op.title}</strong>${itemsHtml}${op.totalSum ? `<div>💰 Итого: ${op.totalSum.toFixed(2)} ₽</div>` : ''}${op.totalPoints ? `<div>⭐ Очки: ${op.totalPoints.toFixed(1)}</div>` : ''}${op.totalIncome ? `<div>💚 Твой доход: ~${op.totalIncome.toFixed(2)} ₽</div>` : ''}</div></div>`;
+        });
+        container.innerHTML = html;
+        document.querySelectorAll('.delete-op-btn').forEach(btn => btn.onclick = () => deleteOperation(parseInt(btn.dataset.id)));
+    }
+
+    function showMonthlyReport() {
+        const months = {};
+        
+        operations.forEach(op => {
+            if (op.type === "ПРОДАЖА") {
+                let dateStr = op.date;
+                let parts = dateStr.split(',')[0].split('.');
+                if (parts.length === 3) {
+                    let day = parts[0];
+                    let month = parts[1];
+                    let year = parts[2];
+                    let date = new Date(year, month - 1, day);
+                    if (!isNaN(date.getTime())) {
+                        const key = `${year}-${month}`;
+                        if (!months[key]) {
+                            months[key] = {
+                                sum: 0,
+                                retailIncome: 0,
+                                companyIncome: 0,
+                                count: 0,
+                                orders: []
+                            };
+                        }
+                        months[key].sum += op.totalSum || 0;
+                        if (op.discountPercent === 0) {
+                            months[key].retailIncome += op.totalSum || 0;
+                        } else if (op.discountPercent > 0) {
+                            months[key].companyIncome += op.totalIncome || 0;
+                        }
+                        months[key].count++;
+                        months[key].orders.push({
+                            date: op.date,
+                            title: op.title,
+                            sum: op.totalSum,
+                            income: op.totalIncome,
+                            items: op.items || []
+                        });
+                    }
+                }
+            }
+        });
+        
+        if (Object.keys(months).length === 0) {
+            showCustomModal('📊 Отчёты по месяцам', '<div style="text-align:center; padding:20px;">📭 Нет продаж. Сделайте первую продажу через кнопку "ПРОДАЖА"</div>', () => {});
+            return;
+        }
+        
+        let monthButtonsHtml = '<div class="month-select" id="monthSelect">';
+        Object.keys(months).sort().reverse().forEach(key => {
+            const [year, month] = key.split('-');
+            const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+            const monthName = monthNames[parseInt(month) - 1];
+            monthButtonsHtml += `<button class="month-btn" data-month="${key}">${monthName} ${year}</button>`;
+        });
+        monthButtonsHtml += '</div><div id="monthReportContent"></div>';
+        
+        showCustomModal('📊 Отчёты по месяцам', monthButtonsHtml, () => {});
+        
+        setTimeout(() => {
+            document.querySelectorAll('.month-btn').forEach(btn => {
+                btn.onclick = () => {
+                    document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    const key = btn.dataset.month;
+                    const data = months[key];
+                    const [year, month] = key.split('-');
+                    const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+                    const monthName = monthNames[parseInt(month) - 1];
+                    
+                    let ordersHtml = '<div style="margin-top:12px;"><strong>📋 Заказы:</strong></div>';
+                    data.orders.forEach(order => {
+                        let itemsList = '';
+                        if (order.items && order.items.length) {
+                            itemsList = '<div style="margin-left:12px; font-size:0.7rem;">';
+                            order.items.forEach(item => {
+                                itemsList += `• ${item.name} × ${item.qty}<br>`;
+                            });
+                            itemsList += '</div>';
+                        }
+                        ordersHtml += `
+                            <div style="border-top:1px solid #eee; padding:8px 0;">
+                                🕒 ${order.date}<br>
+                                ${order.title}<br>
+                                ${itemsList}
+                                💰 ${order.sum?.toFixed(2)} ₽ | 💚 ${order.income?.toFixed(2)} ₽
+                            </div>
+                        `;
+                    });
+                    
+                    document.getElementById('monthReportContent').innerHTML = `
+                        <div style="background:#F9F5FF; border-radius:28px; padding:12px; margin-top:12px;">
+                            <div><strong>${monthName} ${year}</strong></div>
+                            <div>📦 Продаж на сумму: ${data.sum.toFixed(2)} ₽</div>
+                            <div>💸 Доход розница: ${data.retailIncome.toFixed(2)} ₽</div>
+                            <div>🧾 Чек от компании: ${data.companyIncome.toFixed(2)} ₽</div>
+                            <div>🛍️ Количество заказов: ${data.count}</div>
+                            ${ordersHtml}
+                        </div>
+                    `;
+                };
+            });
+            const firstBtn = document.querySelector('.month-btn');
+            if (firstBtn) firstBtn.click();
+        }, 100);
+    }
+
+    // ======================= РЕЗЕРВНОЕ КОПИРОВАНИЕ =======================
+    function backupSave() {
+        const data = {
+            stock: stock,
+            operations: operations,
+            retailIncomeTotal: retailIncomeTotal,
+            companyCheckTotal: companyCheckTotal,
+            device_id: localStorage.getItem("device_id"),
+            licensed: localStorage.getItem("licensed")
+        };
+        const json = JSON.stringify(data, null, 2);
+        const blob = new Blob([json], {type: "application/json"});
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = `herbalife_backup_${new Date().toISOString().slice(0,19)}.json`;
+        link.click();
+        URL.revokeObjectURL(link.href);
+        alert("💾 Резервная копия сохранена!");
+    }
+    
+    function backupLoad() {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+        input.onchange = (e) => {
+            const file = e.target.files[0];
+            if(!file) return;
+            const reader = new FileReader();
+            reader.onload = (ev) => {
+                try {
+                    const data = JSON.parse(ev.target.result);
+                    if(data.stock) stock = data.stock;
+                    if(data.operations) operations = data.operations;
+                    if(data.retailIncomeTotal !== undefined) retailIncomeTotal = data.retailIncomeTotal;
+                    if(data.companyCheckTotal !== undefined) companyCheckTotal = data.companyCheckTotal;
+                    if(data.device_id) localStorage.setItem("device_id", data.device_id);
+                    if(data.licensed) localStorage.setItem("licensed", data.licensed);
+                    saveAll();
+                    computeStats();
+                    renderProducts();
+                    renderHistory();
+                    alert("✅ Данные восстановлены!");
+                    location.reload();
+                } catch(err) {
+                    alert("❌ Ошибка при восстановлении: неверный файл");
+                }
+            };
+            reader.readAsText(file);
+        };
+        input.click();
+    }
+
+    function downloadCSV(filename, rows, headers) {
+        let csv = headers.join(",")+"\n";
+        rows.forEach(row => { csv += row.map(c=>`"${String(c).replace(/"/g,'""')}"`).join(",")+"\n"; });
+        const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8;"});
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = filename;
+        link.click();
+        URL.revokeObjectURL(link.href);
+    }
+    function exportStock() {
+        const rows = products.filter(p=>(stock[p.sku]||0)>0).map(p=>[p.name, p.sku, stock[p.sku], p.vp, p.svPrice, p.retail, (stock[p.sku]*p.svPrice).toFixed(2)]);
+        if(!rows.length) { alert("Нет товаров"); return; }
+        downloadCSV("остатки_склада.csv", rows, ["Товар","SKU","Кол-во","VP","Цена СВ","Розница","Общая СВ"]);
+    }
+    function exportIncome() {
+        const rows = operations.filter(op=>op.type==="ПРИХОД").flatMap(op => op.items ? op.items.map(item => [op.date, `+${item.qty} x ${item.name}`]) : [[op.date, op.title]]);
+        downloadCSV("приходы.csv", rows, ["Дата","Описание"]);
+    }
+    function exportSale() {
+        const rows = operations.filter(op=>op.type==="ПРОДАЖА").flatMap(op => op.items ? op.items.map(item => [op.date, op.clientName || "", op.discountPercent+"%", item.name, item.qty, item.totalPrice, op.totalIncome]) : [[op.date, op.title, "", "", "", "", ""]]);
+        downloadCSV("продажи.csv", rows, ["Дата","Клиент","Скидка","Товар","Кол-во","Сумма","Ваш доход"]);
+    }
+    function resetAll() {
+        if(confirm("❗ ОЧИСТИТЬ ВСЁ? Склад и история будут удалены без возврата.")) {
+            products.forEach(p=>stock[p.sku]=0);
+            operations = [];
+            retailIncomeTotal = 0;
+            companyCheckTotal = 0;
+            saveAll();
+            computeStats();
+            renderProducts();
+            renderHistory();
+        }
+    }
+
+    document.getElementById('incomeMassBtn')?.addEventListener('click', showMassIncome);
+    document.getElementById('saleMassBtn')?.addEventListener('click', showMassSale);
+    document.getElementById('personalWriteOffBtn')?.addEventListener('click', showPersonalWriteOff);
+    document.getElementById('exchangeBtn')?.addEventListener('click', exchange);
+    document.getElementById('resetBtn')?.addEventListener('click', resetAll);
+    document.getElementById('exportStockBtn')?.addEventListener('click', exportStock);
+    document.getElementById('exportIncomeBtn')?.addEventListener('click', exportIncome);
+    document.getElementById('exportSaleBtn')?.addEventListener('click', exportSale);
+    document.getElementById('monthlyReportBtn')?.addEventListener('click', showMonthlyReport);
+    document.getElementById('backupSaveBtn')?.addEventListener('click', backupSave);
+    document.getElementById('backupLoadBtn')?.addEventListener('click', backupLoad);
+    document.getElementById('searchInput')?.addEventListener('input', () => renderProducts());
+    
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            currentFilter = btn.dataset.filter;
+            renderHistory();
+        });
+    });
+
+    if(checkLicense()) {
+        loadData();
+        computeStats();
+        renderProducts();
+        renderHistory();
+        document.getElementById("licenseScreen").style.display = "none";
+        document.getElementById("mainApp").style.display = "block";
+        setupAdminAccess();
+    }
+</script>
+</body>
+</html>
