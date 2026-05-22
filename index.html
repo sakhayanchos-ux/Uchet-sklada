@@ -209,7 +209,7 @@
             <button class="btn btn-primary" id="backupSaveBtn">💾 Резервная копия</button>
             <button class="btn btn-primary" id="backupLoadBtn">📂 Восстановить</button>
         </div>
-        <footer>🌿 Пусть будет изобилия продуктов Herbalife 🌿</footer>
+        <footer>🌿 Нажмите 5 раз на заголовок для входа в админ-панель</footer>
     </div>
 </div>
 
@@ -475,7 +475,7 @@
             date: new Date().toLocaleString(),
             type: type,
             title: title,
-            items: items.map(i => ({ name: i.name, qty: i.qty, sku: i.sku, svPrice: i.svPrice, totalPrice: i.totalPrice })),
+            items: items.map(i => ({ name: i.name, qty: i.qty, sku: i.sku, svPrice: i.svPrice, totalPrice: i.totalPrice, totalPoints: i.totalPoints, action: i.action })),
             totalSum: totalSum,
             totalPoints: totalPoints,
             totalIncome: totalIncome,
@@ -490,71 +490,60 @@
     }
 
     function reverseOperation(op) {
-    if(op.items && op.items.length) {
-        op.items.forEach(item => {
-            if(op.type === 'ПРИХОД') {
-                stock[item.sku] = (stock[item.sku] || 0) - item.qty;
-            } 
-            else if(op.type === 'ОСНОВНОЙ СКЛАД') {
-                stock[item.sku] = (stock[item.sku] || 0) - item.qty;
-            }
-            else if(op.type === 'ПРОДАЖА') {
-                stock[item.sku] = (stock[item.sku] || 0) + item.qty;
-                if(op.discountPercent === 0 && op.totalSum) {
-                    retailIncomeTotal -= op.totalSum;
-                }
-                if(op.discountPercent !== null && op.discountPercent > 0 && op.totalIncome) {
-                    companyCheckTotal -= op.totalIncome;
-                }
-            }
-            else if(op.type === 'ЛИЧНОЕ') {
-                stock[item.sku] = (stock[item.sku] || 0) + item.qty;
-            }
-            else if(op.type === 'ОБМЕН') {
-                // Для обмена: если action === 'give' — возвращаем отданное, если 'take' — забираем полученное
-                if(item.action === 'give') {
-                    stock[item.sku] = (stock[item.sku] || 0) + item.qty;
-                } else if(item.action === 'take') {
+        if(op.items && op.items.length) {
+            op.items.forEach(item => {
+                if(op.type === 'ПРИХОД') {
                     stock[item.sku] = (stock[item.sku] || 0) - item.qty;
-                } else {
-                    // Если action нет (старая версия), пробуем определить по наличию
-                    // Это для совместимости со старыми операциями
-                    if(item.qty > 0) {
-                        // Не можем точно определить, поэтому пропускаем
-                        console.warn("Невозможно откатить обмен без action");
+                } 
+                else if(op.type === 'ОСНОВНОЙ СКЛАД') {
+                    stock[item.sku] = (stock[item.sku] || 0) - item.qty;
+                }
+                else if(op.type === 'ПРОДАЖА') {
+                    stock[item.sku] = (stock[item.sku] || 0) + item.qty;
+                    if(op.discountPercent === 0 && op.totalSum) retailIncomeTotal -= op.totalSum;
+                    if(op.discountPercent !== null && op.discountPercent > 0 && op.totalIncome) companyCheckTotal -= op.totalIncome;
+                }
+                else if(op.type === 'ЛИЧНОЕ') {
+                    stock[item.sku] = (stock[item.sku] || 0) + item.qty;
+                }
+                else if(op.type === 'ОБМЕН') {
+                    if(item.action === 'give') {
+                        stock[item.sku] = (stock[item.sku] || 0) + item.qty;
+                    } else if(item.action === 'take') {
+                        stock[item.sku] = (stock[item.sku] || 0) - item.qty;
                     }
                 }
-            }
-        });
-    }
-    saveAll();
-    computeStats();
-    renderProducts();
-}
-
-function deleteOperation(opId) {
-    const index = operations.findIndex(op => op.id === opId);
-    if(index === -1) return;
-    const op = operations[index];
-    
-    let confirmMessage = `Удалить операцию?\n\n`;
-    if(op.type === 'ПРИХОД') confirmMessage += `📦 ПРИХОД: ${op.title}\n\nСклад вернётся в состояние ДО прихода (товары вычтутся)`;
-    else if(op.type === 'ОСНОВНОЙ СКЛАД') confirmMessage += `🏠 ОСНОВНОЙ СКЛАД: ${op.title}\n\nСклад вернётся в состояние ДО добавления (товары вычтутся)`;
-    else if(op.type === 'ПРОДАЖА') confirmMessage += `📤 ПРОДАЖА: ${op.title}\n\nСклад вернётся в состояние ДО продажи (товары вернутся)`;
-    else if(op.type === 'ЛИЧНОЕ') confirmMessage += `🎁 ЛИЧНОЕ СПИСАНИЕ: ${op.title}\n\nСклад вернётся в состояние ДО списания (товары вернутся)`;
-    else if(op.type === 'ОБМЕН') confirmMessage += `🔄 ОБМЕН: ${op.title}\n\nСклад вернётся в состояние ДО обмена (отданное вернётся, полученное уйдёт)`;
-    else confirmMessage += `${op.title}\n\nСклад вернётся в состояние ДО операции`;
-    
-    if(confirm(confirmMessage)) {
-        reverseOperation(op);
-        operations.splice(index, 1);
+            });
+        }
         saveAll();
         computeStats();
         renderProducts();
-        renderHistory();
-        alert(`✅ Операция удалена, склад восстановлен`);
     }
-}
+
+    function deleteOperation(opId) {
+        const index = operations.findIndex(op => op.id === opId);
+        if(index === -1) return;
+        const op = operations[index];
+        
+        let confirmMessage = `Удалить операцию?\n\n`;
+        if(op.type === 'ПРИХОД') confirmMessage += `📦 ПРИХОД: ${op.title}\n\nСклад вернётся в состояние ДО прихода`;
+        else if(op.type === 'ОСНОВНОЙ СКЛАД') confirmMessage += `🏠 ОСНОВНОЙ СКЛАД: ${op.title}\n\nСклад вернётся в состояние ДО добавления`;
+        else if(op.type === 'ПРОДАЖА') confirmMessage += `📤 ПРОДАЖА: ${op.title}\n\nСклад вернётся в состояние ДО продажи (товары вернутся)`;
+        else if(op.type === 'ЛИЧНОЕ') confirmMessage += `🎁 ЛИЧНОЕ СПИСАНИЕ: ${op.title}\n\nСклад вернётся в состояние ДО списания`;
+        else if(op.type === 'ОБМЕН') confirmMessage += `🔄 ОБМЕН: ${op.title}\n\nСклад вернётся в состояние ДО обмена`;
+        else confirmMessage += `${op.title}\n\nСклад вернётся в состояние ДО операции`;
+        
+        if(confirm(confirmMessage)) {
+            reverseOperation(op);
+            operations.splice(index, 1);
+            saveAll();
+            computeStats();
+            renderProducts();
+            renderHistory();
+            alert(`✅ Операция удалена, склад восстановлен`);
+        }
+    }
+
     function showCustomModal(title, contentHtml, onConfirm) {
         const modal = document.createElement('div');
         modal.className = 'modal-overlay';
@@ -639,177 +628,154 @@ function deleteOperation(opId) {
     }
 
     function exchange() {
-    const modal = document.createElement('div');
-    modal.className = 'modal-overlay';
-    modal.innerHTML = `
-        <div class="modal-card" style="max-width:600px;">
-            <h3>🔄 ОБМЕН ТОВАРАМИ</h3>
-            <div style="margin-bottom:15px;">
-                <label><strong>📦 Отдаю товар:</strong></label>
-                <input type="text" id="searchOut" placeholder="🔍 Поиск по названию или SKU" style="width:100%; padding:8px; margin:5px 0; border-radius:30px; border:1px solid #DDCEFF;">
-                <select id="productOut" size="5" style="width:100%; padding:8px; border-radius:20px; border:1px solid #DDCEFF;"></select>
-                <input type="number" id="qtyOut" placeholder="Количество" value="1" min="1" step="1" style="width:100%; padding:8px; margin-top:5px; border-radius:30px; border:1px solid #DDCEFF;">
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-card" style="max-width:600px;">
+                <h3>🔄 ОБМЕН ТОВАРАМИ</h3>
+                <div style="margin-bottom:15px;">
+                    <label><strong>📦 Отдаю товар:</strong></label>
+                    <input type="text" id="searchOut" placeholder="🔍 Поиск по названию или SKU" style="width:100%; padding:8px; margin:5px 0; border-radius:30px; border:1px solid #DDCEFF;">
+                    <select id="productOut" size="5" style="width:100%; padding:8px; border-radius:20px; border:1px solid #DDCEFF;"></select>
+                    <input type="number" id="qtyOut" placeholder="Количество" value="1" min="1" step="1" style="width:100%; padding:8px; margin-top:5px; border-radius:30px; border:1px solid #DDCEFF;">
+                </div>
+                <div style="margin-bottom:15px;">
+                    <label><strong>📥 Получаю товар:</strong></label>
+                    <input type="text" id="searchIn" placeholder="🔍 Поиск по названию или SKU" style="width:100%; padding:8px; margin:5px 0; border-radius:30px; border:1px solid #DDCEFF;">
+                    <select id="productIn" size="5" style="width:100%; padding:8px; border-radius:20px; border:1px solid #DDCEFF;"></select>
+                    <input type="number" id="qtyIn" placeholder="Количество" value="1" min="1" step="1" style="width:100%; padding:8px; margin-top:5px; border-radius:30px; border:1px solid #DDCEFF;">
+                </div>
+                <div style="margin-bottom:15px; background:#F0E8FF; border-radius:28px; padding:12px;">
+                    <label><strong>💰 Разница по закупочным ценам (СВ):</strong></label>
+                    <div id="diffDisplay" style="font-size:1.2rem; font-weight:bold; margin:8px 0; text-align:center;">0 ₽</div>
+                    <label><strong>💸 Доплата (₽):</strong></label>
+                    <input type="number" id="extraPayment" placeholder="0" value="0" step="100" style="width:100%; padding:8px; border-radius:30px; border:1px solid #DDCEFF;">
+                    <div id="totalDisplay" style="font-size:1rem; margin-top:10px; text-align:center; background:white; border-radius:28px; padding:8px;"></div>
+                </div>
+                <div class="modal-buttons">
+                    <button class="btn btn-primary" id="exchangeConfirmBtn">✅ Обменять</button>
+                    <button class="btn" id="exchangeCancelBtn">Отмена</button>
+                </div>
             </div>
-            <div style="margin-bottom:15px;">
-                <label><strong>📥 Получаю товар:</strong></label>
-                <input type="text" id="searchIn" placeholder="🔍 Поиск по названию или SKU" style="width:100%; padding:8px; margin:5px 0; border-radius:30px; border:1px solid #DDCEFF;">
-                <select id="productIn" size="5" style="width:100%; padding:8px; border-radius:20px; border:1px solid #DDCEFF;"></select>
-                <input type="number" id="qtyIn" placeholder="Количество" value="1" min="1" step="1" style="width:100%; padding:8px; margin-top:5px; border-radius:30px; border:1px solid #DDCEFF;">
-            </div>
-            <div style="margin-bottom:15px; background:#F0E8FF; border-radius:28px; padding:12px;">
-                <label><strong>💰 Разница по закупочным ценам (СВ):</strong></label>
-                <div id="diffDisplay" style="font-size:1.2rem; font-weight:bold; margin:8px 0; text-align:center;">0 ₽</div>
-                <label><strong>💸 Доплата (₽):</strong></label>
-                <input type="number" id="extraPayment" placeholder="0" value="0" step="100" style="width:100%; padding:8px; border-radius:30px; border:1px solid #DDCEFF;">
-                <div id="totalDisplay" style="font-size:1rem; margin-top:10px; text-align:center; background:white; border-radius:28px; padding:8px;"></div>
-            </div>
-            <div class="modal-buttons">
-                <button class="btn btn-primary" id="exchangeConfirmBtn">✅ Обменять</button>
-                <button class="btn" id="exchangeCancelBtn">Отмена</button>
-            </div>
-        </div>
-    `;
-    document.body.appendChild(modal);
-    setTimeout(() => modal.classList.add('active'), 10);
-    
-    function updateDiff() {
-        const outSku = modal.querySelector('#productOut').value;
-        const inSku = modal.querySelector('#productIn').value;
-        const outQty = parseInt(modal.querySelector('#qtyOut').value) || 0;
-        const inQty = parseInt(modal.querySelector('#qtyIn').value) || 0;
-        const extraPayment = parseFloat(modal.querySelector('#extraPayment').value) || 0;
+        `;
+        document.body.appendChild(modal);
+        setTimeout(() => modal.classList.add('active'), 10);
         
-        if(!outSku || !inSku || outQty <= 0 || inQty <= 0) {
-            modal.querySelector('#diffDisplay').innerHTML = '— выберите товары —';
-            modal.querySelector('#totalDisplay').innerHTML = '';
-            return;
-        }
-        
-        const outProd = products.find(p => p.sku === outSku);
-        const inProd = products.find(p => p.sku === inSku);
-        
-        const valueOut = outProd.svPrice * outQty;
-        const valueIn = inProd.svPrice * inQty;
-        const diff = valueIn - valueOut;
-        
-        modal.querySelector('#diffDisplay').innerHTML = `${diff.toFixed(2)} ₽`;
-        
-        let totalMessage = '';
-        if(diff > 0) {
-            totalMessage = `⚠️ Вы должны доплатить: ${diff.toFixed(2)} ₽`;
-        } else if(diff < 0) {
-            totalMessage = `✅ Вам должны доплатить: ${Math.abs(diff).toFixed(2)} ₽`;
-        } else {
-            totalMessage = `⚖️ Равноценный обмен (доплата не нужна)`;
-        }
-        
-        if(extraPayment !== 0) {
-            const finalBalance = diff + extraPayment;
-            if(finalBalance > 0) {
-                totalMessage += `<br>➕ С учётом вашей доплаты: вы отдаёте ещё ${extraPayment} ₽ → итого должны: ${finalBalance.toFixed(2)} ₽`;
-            } else if(finalBalance < 0) {
-                totalMessage += `<br>➖ С учётом вашей доплаты: вам должны: ${Math.abs(finalBalance).toFixed(2)} ₽`;
-            } else {
-                totalMessage += `<br>⚖️ Идеально! С учётом доплаты разница = 0`;
+        function updateDiff() {
+            const outSku = modal.querySelector('#productOut').value;
+            const inSku = modal.querySelector('#productIn').value;
+            const outQty = parseInt(modal.querySelector('#qtyOut').value) || 0;
+            const inQty = parseInt(modal.querySelector('#qtyIn').value) || 0;
+            const extraPayment = parseFloat(modal.querySelector('#extraPayment').value) || 0;
+            
+            if(!outSku || !inSku || outQty <= 0 || inQty <= 0) {
+                modal.querySelector('#diffDisplay').innerHTML = '— выберите товары —';
+                modal.querySelector('#totalDisplay').innerHTML = '';
+                return;
             }
+            
+            const outProd = products.find(p => p.sku === outSku);
+            const inProd = products.find(p => p.sku === inSku);
+            
+            const valueOut = outProd.svPrice * outQty;
+            const valueIn = inProd.svPrice * inQty;
+            const diff = valueIn - valueOut;
+            
+            modal.querySelector('#diffDisplay').innerHTML = `${diff.toFixed(2)} ₽`;
+            
+            let totalMessage = '';
+            if(diff > 0) totalMessage = `⚠️ Вы должны доплатить: ${diff.toFixed(2)} ₽`;
+            else if(diff < 0) totalMessage = `✅ Вам должны доплатить: ${Math.abs(diff).toFixed(2)} ₽`;
+            else totalMessage = `⚖️ Равноценный обмен (доплата не нужна)`;
+            
+            if(extraPayment !== 0) {
+                const finalBalance = diff + extraPayment;
+                if(finalBalance > 0) totalMessage += `<br>➕ С учётом доплаты: вы должны: ${finalBalance.toFixed(2)} ₽`;
+                else if(finalBalance < 0) totalMessage += `<br>➖ С учётом доплаты: вам должны: ${Math.abs(finalBalance).toFixed(2)} ₽`;
+                else totalMessage += `<br>⚖️ Идеально! Разница = 0`;
+            }
+            
+            modal.querySelector('#totalDisplay').innerHTML = totalMessage;
         }
         
-        modal.querySelector('#totalDisplay').innerHTML = totalMessage;
+        function fillSelect(selectElement, searchValue = '') {
+            let filtered = products;
+            if(searchValue) {
+                const low = searchValue.toLowerCase();
+                filtered = products.filter(p => p.name.toLowerCase().includes(low) || p.sku.toLowerCase().includes(low));
+            }
+            selectElement.innerHTML = '';
+            filtered.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.sku;
+                option.textContent = `${p.name} (${p.sku}) — в наличии: ${stock[p.sku] || 0} шт | СВ: ${p.svPrice}₽`;
+                selectElement.appendChild(option);
+            });
+            if(filtered.length === 0) selectElement.innerHTML = '<option disabled>😕 Товары не найдены</option>';
+        }
+        
+        const selectOut = modal.querySelector('#productOut');
+        const selectIn = modal.querySelector('#productIn');
+        const searchOut = modal.querySelector('#searchOut');
+        const searchIn = modal.querySelector('#searchIn');
+        const qtyOut = modal.querySelector('#qtyOut');
+        const qtyIn = modal.querySelector('#qtyIn');
+        const extraPaymentEl = modal.querySelector('#extraPayment');
+        
+        fillSelect(selectOut);
+        fillSelect(selectIn);
+        
+        searchOut.addEventListener('input', () => fillSelect(selectOut, searchOut.value));
+        searchIn.addEventListener('input', () => fillSelect(selectIn, searchIn.value));
+        
+        selectOut.addEventListener('change', updateDiff);
+        selectIn.addEventListener('change', updateDiff);
+        qtyOut.addEventListener('input', updateDiff);
+        qtyIn.addEventListener('input', updateDiff);
+        extraPaymentEl.addEventListener('input', updateDiff);
+        
+        setTimeout(updateDiff, 100);
+        
+        modal.querySelector('#exchangeConfirmBtn').onclick = () => {
+            const outSku = selectOut.value;
+            const inSku = selectIn.value;
+            const outQty = parseInt(qtyOut.value) || 0;
+            const inQty = parseInt(qtyIn.value) || 0;
+            const extra = parseFloat(extraPaymentEl.value) || 0;
+            
+            if(!outSku || !inSku) { alert("❌ Выберите оба товара"); return; }
+            if(outQty <= 0 || inQty <= 0) { alert("❌ Количество должно быть больше 0"); return; }
+            
+            const outProd = products.find(p => p.sku === outSku);
+            const inProd = products.find(p => p.sku === inSku);
+            
+            if((stock[outSku] || 0) < outQty) { alert(`❌ Не хватает ${outProd.name} (в наличии: ${stock[outSku] || 0})`); return; }
+            
+            const valueOut = outProd.svPrice * outQty;
+            const valueIn = inProd.svPrice * inQty;
+            const diff = valueIn - valueOut;
+            const finalMessage = `Разница по СВ: ${diff.toFixed(2)} ₽. Доплата: ${extra} ₽. Итого: ${(diff + extra).toFixed(2)} ₽`;
+            
+            if(!confirm(`Подтвердить обмен?\n\nОтдаёте: ${outQty} x ${outProd.name}\nПолучаете: ${inQty} x ${inProd.name}\n\n${finalMessage}`)) return;
+            
+            stock[outSku] -= outQty;
+            stock[inSku] = (stock[inSku] || 0) + inQty;
+            
+            const items = [
+                { name: outProd.name, qty: outQty, sku: outSku, svPrice: outProd.svPrice, totalPrice: 0, totalPoints: 0, action: 'give' },
+                { name: inProd.name, qty: inQty, sku: inSku, svPrice: inProd.svPrice, totalPrice: 0, totalPoints: 0, action: 'take' }
+            ];
+            
+            addOperation('ОБМЕН', `ОБМЕН: отдал ${outQty}x ${outProd.name}, получил ${inQty}x ${inProd.name}. Доплата: ${extra}₽. ${finalMessage}`, items);
+            computeStats();
+            renderProducts();
+            renderHistory();
+            modal.remove();
+        };
+        
+        modal.querySelector('#exchangeCancelBtn').onclick = () => modal.remove();
     }
-    
-    function fillSelect(selectElement, searchValue = '') {
-        let filtered = products;
-        if(searchValue) {
-            const low = searchValue.toLowerCase();
-            filtered = products.filter(p => p.name.toLowerCase().includes(low) || p.sku.toLowerCase().includes(low));
-        }
-        selectElement.innerHTML = '';
-        filtered.forEach(p => {
-            const option = document.createElement('option');
-            option.value = p.sku;
-            option.textContent = `${p.name} (${p.sku}) — в наличии: ${stock[p.sku] || 0} шт | СВ: ${p.svPrice}₽`;
-            selectElement.appendChild(option);
-        });
-        if(filtered.length === 0) {
-            selectElement.innerHTML = '<option disabled>😕 Товары не найдены</option>';
-        }
-    }
-    
-    const selectOut = modal.querySelector('#productOut');
-    const selectIn = modal.querySelector('#productIn');
-    const searchOut = modal.querySelector('#searchOut');
-    const searchIn = modal.querySelector('#searchIn');
-    const qtyOut = modal.querySelector('#qtyOut');
-    const qtyIn = modal.querySelector('#qtyIn');
-    const extraPaymentEl = modal.querySelector('#extraPayment');
-    
-    fillSelect(selectOut);
-    fillSelect(selectIn);
-    
-    searchOut.addEventListener('input', () => fillSelect(selectOut, searchOut.value));
-    searchIn.addEventListener('input', () => fillSelect(selectIn, searchIn.value));
-    
-    selectOut.addEventListener('change', updateDiff);
-    selectIn.addEventListener('change', updateDiff);
-    qtyOut.addEventListener('input', updateDiff);
-    qtyIn.addEventListener('input', updateDiff);
-    extraPaymentEl.addEventListener('input', updateDiff);
-    
-    setTimeout(updateDiff, 100);
-    
-    modal.querySelector('#exchangeConfirmBtn').onclick = () => {
-        const outSku = selectOut.value;
-        const inSku = selectIn.value;
-        const outQty = parseInt(qtyOut.value) || 0;
-        const inQty = parseInt(qtyIn.value) || 0;
-        const extra = parseFloat(extraPaymentEl.value) || 0;
-        
-        if(!outSku || !inSku) {
-            alert("❌ Выберите оба товара");
-            return;
-        }
-        if(outQty <= 0 || inQty <= 0) {
-            alert("❌ Количество должно быть больше 0");
-            return;
-        }
-        
-        const outProd = products.find(p => p.sku === outSku);
-        const inProd = products.find(p => p.sku === inSku);
-        
-        if((stock[outSku] || 0) < outQty) {
-            alert(`❌ Не хватает ${outProd.name} (в наличии: ${stock[outSku] || 0})`);
-            return;
-        }
-        
-        const valueOut = outProd.svPrice * outQty;
-        const valueIn = inProd.svPrice * inQty;
-        const diff = valueIn - valueOut;
-        const finalMessage = `Разница по СВ: ${diff.toFixed(2)} ₽. Доплата: ${extra} ₽. Итого: ${(diff + extra).toFixed(2)} ₽`;
-        
-        if(!confirm(`Подтвердить обмен?\n\nОтдаёте: ${outQty} x ${outProd.name}\nПолучаете: ${inQty} x ${inProd.name}\n\n${finalMessage}`)) {
-            return;
-        }
-        
-        // Проводим обмен
-        stock[outSku] -= outQty;
-        stock[inSku] = (stock[inSku] || 0) + inQty;
-        
-        // Сохраняем в операцию оба товара с пометкой give/take для правильного отката
-        const items = [
-            { name: outProd.name, qty: outQty, sku: outSku, svPrice: outProd.svPrice, totalPrice: 0, totalPoints: 0, action: 'give' },
-            { name: inProd.name, qty: inQty, sku: inSku, svPrice: inProd.svPrice, totalPrice: 0, totalPoints: 0, action: 'take' }
-        ];
-        
-        addOperation('ОБМЕН', `ОБМЕН: отдал ${outQty}x ${outProd.name}, получил ${inQty}x ${inProd.name}. Доплата: ${extra}₽. ${finalMessage}`, items);
-        
-        computeStats();
-        renderProducts();
-        renderHistory();
-        modal.remove();
-    };
-    
-    modal.querySelector('#exchangeCancelBtn').onclick = () => modal.remove();
-}
+
     function addMainStock(sku) {
         const prod = products.find(p=>p.sku===sku);
         if(!prod) return;
