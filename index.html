@@ -606,29 +606,170 @@
     }
 
     function exchange() {
-        const outSku = prompt("SKU товара, который отдаёте:");
-        const outProd = products.find(p=>p.sku===outSku);
-        if(!outProd) { alert("Не найден"); return; }
-        const outQty = parseInt(prompt(`Кол-во отдаваемого ${outProd.name}:`,"1"));
-        if((stock[outProd.sku]||0) < outQty) { alert("Недостаточно"); return; }
-        const inSku = prompt("SKU товара, который получаете:");
-        const inProd = products.find(p=>p.sku===inSku);
-        if(!inProd) { alert("Не найден"); return; }
-        const inQty = parseInt(prompt(`Кол-во получаемого ${inProd.name}:`,"1"));
-        let extra = parseFloat(prompt("Доплата (вы доплачиваете +, вам -):","0"));
-        if(isNaN(extra)) extra=0;
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-card" style="max-width:600px;">
+            <h3>🔄 ОБМЕН ТОВАРАМИ</h3>
+            <div style="margin-bottom:15px;">
+                <label><strong>📦 Отдаю товар:</strong></label>
+                <input type="text" id="searchOut" placeholder="🔍 Поиск по названию или SKU" style="width:100%; padding:8px; margin:5px 0; border-radius:30px; border:1px solid #DDCEFF;">
+                <select id="productOut" size="5" style="width:100%; padding:8px; border-radius:20px; border:1px solid #DDCEFF;"></select>
+                <input type="number" id="qtyOut" placeholder="Количество" value="1" min="1" step="1" style="width:100%; padding:8px; margin-top:5px; border-radius:30px; border:1px solid #DDCEFF;">
+            </div>
+            <div style="margin-bottom:15px;">
+                <label><strong>📥 Получаю товар:</strong></label>
+                <input type="text" id="searchIn" placeholder="🔍 Поиск по названию или SKU" style="width:100%; padding:8px; margin:5px 0; border-radius:30px; border:1px solid #DDCEFF;">
+                <select id="productIn" size="5" style="width:100%; padding:8px; border-radius:20px; border:1px solid #DDCEFF;"></select>
+                <input type="number" id="qtyIn" placeholder="Количество" value="1" min="1" step="1" style="width:100%; padding:8px; margin-top:5px; border-radius:30px; border:1px solid #DDCEFF;">
+            </div>
+            <div style="margin-bottom:15px; background:#F0E8FF; border-radius:28px; padding:12px;">
+                <label><strong>💰 Разница по закупочным ценам (СВ):</strong></label>
+                <div id="diffDisplay" style="font-size:1.2rem; font-weight:bold; margin:8px 0; text-align:center;">0 ₽</div>
+                <label><strong>💸 Доплата (₽):</strong></label>
+                <input type="number" id="extraPayment" placeholder="0" value="0" step="100" style="width:100%; padding:8px; border-radius:30px; border:1px solid #DDCEFF;">
+                <div id="totalDisplay" style="font-size:1rem; margin-top:10px; text-align:center; background:white; border-radius:28px; padding:8px;"></div>
+            </div>
+            <div class="modal-buttons">
+                <button class="btn btn-primary" id="exchangeConfirmBtn">✅ Обменять</button>
+                <button class="btn" id="exchangeCancelBtn">Отмена</button>
+            </div>
+        </div>
+    `;
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('active'), 10);
+    
+    function updateDiff() {
+        const outSku = modal.querySelector('#productOut').value;
+        const inSku = modal.querySelector('#productIn').value;
+        const outQty = parseInt(modal.querySelector('#qtyOut').value) || 0;
+        const inQty = parseInt(modal.querySelector('#qtyIn').value) || 0;
+        const extraPayment = parseFloat(modal.querySelector('#extraPayment').value) || 0;
+        
+        if(!outSku || !inSku || outQty <= 0 || inQty <= 0) {
+            modal.querySelector('#diffDisplay').innerHTML = '— выберите товары —';
+            modal.querySelector('#totalDisplay').innerHTML = '';
+            return;
+        }
+        
+        const outProd = products.find(p => p.sku === outSku);
+        const inProd = products.find(p => p.sku === inSku);
         
         const valueOut = outProd.svPrice * outQty;
         const valueIn = inProd.svPrice * inQty;
-        const balance = valueIn - valueOut;
-        alert(`🔄 ОБМЕН:\n\nОтдаёте: ${outQty}x ${outProd.name} (СВ ${valueOut.toFixed(2)}₽)\nПолучаете: ${inQty}x ${inProd.name} (СВ ${valueIn.toFixed(2)}₽)\nРазница по закупке: ${balance.toFixed(2)}₽\nДоплата: ${extra}₽\n\nИтог: ${(balance + extra).toFixed(2)}₽`);
+        const diff = valueIn - valueOut;
         
-        stock[outProd.sku] -= outQty;
-        stock[inProd.sku] = (stock[inProd.sku]||0) + inQty;
-        addOperation('ОБМЕН', `ОБМЕН: отдал ${outQty}x ${outProd.name}, получил ${inQty}x ${inProd.name}. Доплата: ${extra}₽`, []);
+        modal.querySelector('#diffDisplay').innerHTML = `${diff.toFixed(2)} ₽`;
+        
+        let totalMessage = '';
+        if(diff > 0) {
+            totalMessage = `⚠️ Вы должны доплатить: ${diff.toFixed(2)} ₽`;
+        } else if(diff < 0) {
+            totalMessage = `✅ Вам должны доплатить: ${Math.abs(diff).toFixed(2)} ₽`;
+        } else {
+            totalMessage = `⚖️ Равноценный обмен (доплата не нужна)`;
+        }
+        
+        if(extraPayment !== 0) {
+            const finalBalance = diff + extraPayment;
+            if(finalBalance > 0) {
+                totalMessage += `<br>➕ С учётом вашей доплаты: вы отдаёте ещё ${extraPayment} ₽ → итого должны: ${finalBalance.toFixed(2)} ₽`;
+            } else if(finalBalance < 0) {
+                totalMessage += `<br>➖ С учётом вашей доплаты: вам должны: ${Math.abs(finalBalance).toFixed(2)} ₽`;
+            } else {
+                totalMessage += `<br>⚖️ Идеально! С учётом доплаты разница = 0`;
+            }
+        }
+        
+        modal.querySelector('#totalDisplay').innerHTML = totalMessage;
+    }
+    
+    function fillSelect(selectElement, searchValue = '') {
+        let filtered = products;
+        if(searchValue) {
+            const low = searchValue.toLowerCase();
+            filtered = products.filter(p => p.name.toLowerCase().includes(low) || p.sku.toLowerCase().includes(low));
+        }
+        selectElement.innerHTML = '';
+        filtered.forEach(p => {
+            const option = document.createElement('option');
+            option.value = p.sku;
+            option.textContent = `${p.name} (${p.sku}) — в наличии: ${stock[p.sku] || 0} шт | СВ: ${p.svPrice}₽`;
+            selectElement.appendChild(option);
+        });
+        if(filtered.length === 0) {
+            selectElement.innerHTML = '<option disabled>😕 Товары не найдены</option>';
+        }
+    }
+    
+    const selectOut = modal.querySelector('#productOut');
+    const selectIn = modal.querySelector('#productIn');
+    const searchOut = modal.querySelector('#searchOut');
+    const searchIn = modal.querySelector('#searchIn');
+    const qtyOut = modal.querySelector('#qtyOut');
+    const qtyIn = modal.querySelector('#qtyIn');
+    const extraPaymentEl = modal.querySelector('#extraPayment');
+    
+    fillSelect(selectOut);
+    fillSelect(selectIn);
+    
+    searchOut.addEventListener('input', () => fillSelect(selectOut, searchOut.value));
+    searchIn.addEventListener('input', () => fillSelect(selectIn, searchIn.value));
+    
+    selectOut.addEventListener('change', updateDiff);
+    selectIn.addEventListener('change', updateDiff);
+    qtyOut.addEventListener('input', updateDiff);
+    qtyIn.addEventListener('input', updateDiff);
+    extraPaymentEl.addEventListener('input', updateDiff);
+    
+    setTimeout(updateDiff, 100);
+    
+    modal.querySelector('#exchangeConfirmBtn').onclick = () => {
+        const outSku = selectOut.value;
+        const inSku = selectIn.value;
+        const outQty = parseInt(qtyOut.value) || 0;
+        const inQty = parseInt(qtyIn.value) || 0;
+        const extra = parseFloat(extraPaymentEl.value) || 0;
+        
+        if(!outSku || !inSku) {
+            alert("❌ Выберите оба товара");
+            return;
+        }
+        if(outQty <= 0 || inQty <= 0) {
+            alert("❌ Количество должно быть больше 0");
+            return;
+        }
+        
+        const outProd = products.find(p => p.sku === outSku);
+        const inProd = products.find(p => p.sku === inSku);
+        
+        if((stock[outSku] || 0) < outQty) {
+            alert(`❌ Не хватает ${outProd.name} (в наличии: ${stock[outSku] || 0})`);
+            return;
+        }
+        
+        const valueOut = outProd.svPrice * outQty;
+        const valueIn = inProd.svPrice * inQty;
+        const diff = valueIn - valueOut;
+        const finalMessage = `Разница по СВ: ${diff.toFixed(2)} ₽. Доплата: ${extra} ₽. Итого: ${(diff + extra).toFixed(2)} ₽`;
+        
+        if(!confirm(`Подтвердить обмен?\n\nОтдаёте: ${outQty} x ${outProd.name}\nПолучаете: ${inQty} x ${inProd.name}\n\n${finalMessage}`)) {
+            return;
+        }
+        
+        stock[outSku] -= outQty;
+        stock[inSku] = (stock[inSku] || 0) + inQty;
+        
+        addOperation('ОБМЕН', `ОБМЕН: отдал ${outQty}x ${outProd.name}, получил ${inQty}x ${inProd.name}. Доплата: ${extra}₽. ${finalMessage}`, []);
+        
         computeStats();
         renderProducts();
-    }
+        renderHistory();
+        modal.remove();
+    };
+    
+    modal.querySelector('#exchangeCancelBtn').onclick = () => modal.remove();
+}
 
     function addMainStock(sku) {
         const prod = products.find(p=>p.sku===sku);
