@@ -315,27 +315,57 @@
     }
     
     function setupAdminAccess() {
-    // Добавляем скрытую зону внизу
-    const footer = document.querySelector('footer');
-    if(footer) {
-        let footerClickCount = 0;
-        let footerTimer = null;
-        footer.style.cursor = 'pointer';
-        footer.title = '(нажмите 5 раз)';
-        footer.onclick = () => {
-            footerClickCount++;
-            if(footerTimer) clearTimeout(footerTimer);
-            footerTimer = setTimeout(() => { footerClickCount = 0; }, 1000);
-            if(footerClickCount >= 5) {
-                footerClickCount = 0;
+    const header = document.getElementById('mainHeader');
+    if(header) {
+        let pressTimer = null;
+        let doubleClickTimer = null;
+        let clickCount = 0;
+        
+        // Способ 1: долгое нажатие (2 секунды) — не вызывает зум
+        header.addEventListener('touchstart', (e) => {
+            pressTimer = setTimeout(() => {
+                pressTimer = null;
                 const masterCode = prompt("🔐 Введите мастер-код для входа в админ-панель:");
                 if(masterCode === "HERBALIFE2026") {
                     showAdminPanel();
                 } else if(masterCode) {
                     alert("❌ Неверный мастер-код");
                 }
+            }, 1000);
+        });
+        
+        header.addEventListener('touchend', () => {
+            if(pressTimer) {
+                clearTimeout(pressTimer);
+                pressTimer = null;
             }
-        };
+        });
+        
+        header.addEventListener('touchmove', () => {
+            if(pressTimer) {
+                clearTimeout(pressTimer);
+                pressTimer = null;
+            }
+        });
+        
+        // Способ 2: двойное быстрое нажатие (резервный)
+        header.addEventListener('click', () => {
+            clickCount++;
+            if(doubleClickTimer) clearTimeout(doubleClickTimer);
+            doubleClickTimer = setTimeout(() => {
+                if(clickCount >= 2) {
+                    const masterCode = prompt("🔐 Введите мастер-код для входа в админ-панель (двойной клик):");
+                    if(masterCode === "HERBALIFE2026") {
+                        showAdminPanel();
+                    } else if(masterCode) {
+                        alert("❌ Неверный мастер-код");
+                    }
+                }
+                clickCount = 0;
+            }, 300);
+        });
+    }
+}
     }
 }
     }
