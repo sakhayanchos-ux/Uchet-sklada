@@ -315,23 +315,29 @@
     }
     
     function setupAdminAccess() {
-        const header = document.getElementById('mainHeader');
-        if(header) {
-            header.onclick = () => {
-                clickCount++;
-                if(clickTimer) clearTimeout(clickTimer);
-                clickTimer = setTimeout(() => { clickCount = 0; }, 1000);
-                if(clickCount >= 5) {
-                    clickCount = 0;
-                    const masterCode = prompt("🔐 Введите мастер-код для входа в админ-панель:");
-                    if(masterCode === "HERBALIFE2026") {
-                        showAdminPanel();
-                    } else if(masterCode) {
-                        alert("❌ Неверный мастер-код");
-                    }
+    // Добавляем скрытую зону внизу
+    const footer = document.querySelector('footer');
+    if(footer) {
+        let footerClickCount = 0;
+        let footerTimer = null;
+        footer.style.cursor = 'pointer';
+        footer.title = '(нажмите 5 раз)';
+        footer.onclick = () => {
+            footerClickCount++;
+            if(footerTimer) clearTimeout(footerTimer);
+            footerTimer = setTimeout(() => { footerClickCount = 0; }, 1000);
+            if(footerClickCount >= 5) {
+                footerClickCount = 0;
+                const masterCode = prompt("🔐 Введите мастер-код для входа в админ-панель:");
+                if(masterCode === "HERBALIFE2026") {
+                    showAdminPanel();
+                } else if(masterCode) {
+                    alert("❌ Неверный мастер-код");
                 }
-            };
-        }
+            }
+        };
+    }
+}
     }
     
     // ======================= ПОЛНЫЙ ПРАЙС-ЛИСТ =======================
