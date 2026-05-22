@@ -4,7 +4,70 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
     <title>СКЛАД Herbalife 🌿</title>
-    <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext x='50' y='85' font-size='85' text-anchor='middle' fill='%239b6b9e'%3E🌿%3C/text%3E%3C/svg%3E">
+    
+    <!-- Генерация иконки PNG для iPhone и Android -->
+    <script>
+        (function() {
+            const canvas = document.createElement('canvas');
+            canvas.width = 180;
+            canvas.height = 180;
+            const ctx = canvas.getContext('2d');
+            
+            // Фон (лавандовый)
+            ctx.fillStyle = '#B29CD6';
+            ctx.beginPath();
+            ctx.roundRect(0, 0, 180, 180, 32);
+            ctx.fill();
+            
+            // Эмодзи 📦 (коробка)
+            ctx.font = '100px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
+            ctx.fillStyle = 'white';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('📦', 90, 95);
+            
+            // Функция для roundRect
+            if (!CanvasRenderingContext2D.prototype.roundRect) {
+                CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+                    if (w < 2 * r) r = w / 2;
+                    if (h < 2 * r) r = h / 2;
+                    this.moveTo(x+r, y);
+                    this.lineTo(x+w-r, y);
+                    this.quadraticCurveTo(x+w, y, x+w, y+r);
+                    this.lineTo(x+w, y+h-r);
+                    this.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+                    this.lineTo(x+r, y+h);
+                    this.quadraticCurveTo(x, y+h, x, y+h-r);
+                    this.lineTo(x, y+r);
+                    this.quadraticCurveTo(x, y, x+r, y);
+                    return this;
+                };
+            }
+            
+            // Сохраняем иконку как PNG
+            const iconUrl = canvas.toDataURL('image/png');
+            
+            // Устанавливаем favicon
+            const favicon = document.createElement('link');
+            favicon.rel = 'icon';
+            favicon.type = 'image/png';
+            favicon.href = iconUrl;
+            document.head.appendChild(favicon);
+            
+            // Устанавливаем apple-touch-icon (для iPhone)
+            const appleIcon = document.createElement('link');
+            appleIcon.rel = 'apple-touch-icon';
+            appleIcon.href = iconUrl;
+            document.head.appendChild(appleIcon);
+        })();
+    </script>
+    
+    <!-- Цвет темы для браузера и iPhone -->
+    <meta name="theme-color" content="#B29CD6">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="HerbaFlow">
+    
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
@@ -91,7 +154,6 @@
         <p>Код устройства:<br><strong id="deviceCode" style="font-size:1.2rem; background:#EEE4FF; padding:8px; border-radius:20px; display:inline-block; margin:10px 0;"></strong></p>
         <p style="font-size:0.8rem;">Отправьте этот код продавцу, чтобы получить ключ</p>
         
-        <!-- КОНТАКТНАЯ ИНФОРМАЦИЯ ДЛЯ СВЯЗИ -->
         <div class="contact-info" id="contactBlock">
             <p style="margin-bottom:8px;">📞 Свяжитесь со мной для получения ключа:</p>
             <a href="https://wa.me/79142609616" id="whatsappLink" target="_blank">
@@ -108,7 +170,7 @@
     </div>
     <div id="mainApp" style="display:none;">
         <h1 id="mainHeader">🌿 СКЛАД Herbalife</h1>
-        <div class="sub">Супервайзер | полный ассортимент + учёт</div>
+        <div class="sub">Супервайзор | полный ассортимент + учёт</div>
 
         <div class="stats-grid">
             <div class="stat-card"><div class="stat-label">📦 Товары</div><div class="stat-value" id="statSku">0</div></div>
@@ -157,18 +219,16 @@
             <button class="btn btn-primary" id="backupSaveBtn">💾 Резервная копия</button>
             <button class="btn btn-primary" id="backupLoadBtn">📂 Восстановить</button>
         </div>
-        <footer>🌿 Нажмите 5 раз на заголовок для входа в админ-панель</footer>
+        <footer></footer></footer>
     </div>
 </div>
 
 <script>
-    // ======================= ССЫЛКА ДЛЯ СВЯЗИ (твоя WhatsApp invite) =======================
+    // ======================= ССЫЛКА ДЛЯ СВЯЗИ =======================
     const WHATSAPP_INVITE_LINK = "https://wa.me/message/TD45SYRF66AEK1";
-    // ================================================================================
     
-    // Функция для обновления (оставляем для совместимости)
     function updateWhatsAppLink() {
-        // Ссылка уже стоит в HTML
+        // ссылка уже стоит в HTML
     }
     
     // ======================= ЛИЦЕНЗИЯ =======================
