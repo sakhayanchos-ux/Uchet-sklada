@@ -338,74 +338,74 @@
         }
     }
     
-    // ======================= ПОЛНЫЙ ПРАЙС-ЛИСТ =======================
+    // ======================= ПОЛНЫЙ ПРАЙС-ЛИСТ (С НОВЫМИ ЦЕНАМИ 15%) =======================
     const products = [
-        { name: "Коктейль Формула 1 - Куриный крем-суп", sku: "395К", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, retail: 3819 },
-        { name: "Коктейль Формула 1 - Ваниль", sku: "500К", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, retail: 3819 },
-        { name: "Коктейль Формула 1 - Кокос", sku: "0930", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, retail: 3819 },
-        { name: "Коктейль Формула 1 - Банан в карамели", sku: "326К", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, retail: 3819 },
-        { name: "Коктейль Формула 1 - Манго", sku: "102К", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, retail: 3819 },
-        { name: "Коктейль Формула 1 - Дыня", sku: "2793", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, retail: 3819 },
-        { name: "Коктейль Формула 1 - Клубника", sku: "501К", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, retail: 3819 },
-        { name: "Коктейль Формула 1 - Нежный шоколад", sku: "4468", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, retail: 3819 },
-        { name: "Коктейль Формула 1 - Хрустящее печенье", sku: "4467", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, retail: 3819 },
-        { name: "Коктейль Формула 1 - Дыня 2 кг", sku: "005К", vp: 99.60, svPrice: 7055.26, price42: 7927.41, price35: 8690.55, price25: 9780.74, retail: 14111 },
-        { name: "Протеиновый кофе Латте Макиато", sku: "012К", vp: 23.95, svPrice: 2196.00, price42: 2402.33, price35: 2582.86, price25: 2840.77, retail: 4392 },
-        { name: "Вечерний Коктейль Формула 1", sku: "1636", vp: 20.15, svPrice: 1604.30, price42: 1802.62, price35: 1976.16, price25: 2224.06, retail: 3209 },
-        { name: "Формула 3 Белковый специализированный", sku: "0242", vp: 17.95, svPrice: 1627.48, price42: 1828.73, price35: 2004.83, price25: 2256.39, retail: 3255 },
-        { name: "Протеиновая смесь для выпечки", sku: "528К", vp: 20.00, svPrice: 1770.22, price42: 1934.58, price35: 2078.39, price25: 2283.84, retail: 3540 },
-        { name: "Травяной напиток Классический 51г", sku: "178К", vp: 19.95, svPrice: 1384.70, price42: 1555.89, price35: 1705.68, price25: 1919.67, retail: 2769 },
-        { name: "Травяной напиток Лимон 51г", sku: "180К", vp: 19.95, svPrice: 1384.70, price42: 1555.89, price35: 1705.68, price25: 1919.67, retail: 2769 },
-        { name: "Травяной напиток Малина 51г", sku: "182К", vp: 19.95, svPrice: 1384.70, price42: 1555.89, price35: 1705.68, price25: 1919.67, retail: 2769 },
-        { name: "Травяной напиток Манго-питахайя 51г", sku: "530К", vp: 19.95, svPrice: 1384.70, price42: 1555.89, price35: 1705.68, price25: 1919.67, retail: 2769 },
-        { name: "Травяной напиток Классический 102г", sku: "179К", vp: 34.95, svPrice: 2583.96, price42: 2903.31, price35: 3182.74, price25: 3581.92, retail: 5168 },
-        { name: "Алоэ Манго", sku: "0757", vp: 24.95, svPrice: 1731.18, price42: 1945.12, price35: 2132.32, price25: 2399.74, retail: 3462 },
-        { name: "Алоэ Классика", sku: "0006", vp: 24.95, svPrice: 1731.18, price42: 1945.12, price35: 2132.32, price25: 2399.74, retail: 3462 },
-        { name: "Алоэ Клюква", sku: "1189", vp: 24.95, svPrice: 1731.18, price42: 1945.12, price35: 2132.32, price25: 2399.74, retail: 3462 },
-        { name: "Овсяно-яблочный напиток", sku: "2864", vp: 22.95, svPrice: 1669.57, price42: 1875.99, price35: 2056.62, price25: 2314.65, retail: 3339 },
-        { name: "Комплекс пищевых волокон", sku: "2865", vp: 22.95, svPrice: 1669.57, price42: 1875.99, price35: 2056.62, price25: 2314.65, retail: 3339 },
-        { name: "Протеиновый батончик Лимонный (14 шт)", sku: "0260", vp: 7.70, svPrice: 1399.34, price42: 1466.49, price35: 1525.24, price25: 1609.18, retail: 2799 },
-        { name: "Батончик ваниль в хрустящей карамели (28 шт)", sku: "001К", vp: 9.24, svPrice: 1678.72, price42: 1759.34, price35: 1829.88, price25: 1930.65, retail: 3357 },
-        { name: "Батончик лимон в хрустящей карамели (28 шт)", sku: "002К", vp: 9.24, svPrice: 1678.72, price42: 1759.34, price35: 1829.88, price25: 1930.65, retail: 3357 },
-        { name: "Батончик F1 Экспресс Тёмный шоколад (7 шт)", sku: "4472", vp: 14.00, svPrice: 1094.34, price42: 1229.61, price35: 1347.98, price25: 1517.07, retail: 2189 },
-        { name: "Батончик F1 Экспресс Клюква и белый шоколад (7 шт)", sku: "4473", vp: 14.00, svPrice: 1094.34, price42: 1229.61, price35: 1347.98, price25: 1517.07, retail: 2189 },
-        { name: "Протеиновые чипсы Барбекю (10 шт)", sku: "141К", vp: 11.75, svPrice: 1413.98, price42: 1544.18, price35: 1658.10, price25: 1820.85, retail: 2828 },
-        { name: "Протеиновые чипсы Сметана и лук (10 шт)", sku: "142К", vp: 11.75, svPrice: 1413.98, price42: 1544.18, price35: 1658.10, price25: 1820.85, retail: 2828 },
-        { name: "Фильтр для воды", sku: "0265", vp: 20.00, svPrice: 2104.50, price42: 2223.77, price35: 2328.13, price25: 2477.21, retail: 4209 },
-        { name: "Сменный картридж для фильтра", sku: "0266", vp: 5.35, svPrice: 615.49, price42: 640.18, price35: 661.79, price25: 692.66, retail: 1231 },
-        { name: "Термо Комплит", sku: "0050", vp: 30.95, svPrice: 2253.34, price42: 2531.89, price35: 2775.62, price25: 3123.81, retail: 4507 },
-        { name: "Фито Комплит", sku: "236К", vp: 29.50, svPrice: 2475.99, price42: 2767.13, price35: 3021.88, price25: 3385.81, retail: 4952 },
-        { name: "Клеточный Активатор", sku: "3123", vp: 21.95, svPrice: 1610.40, price42: 1809.50, price35: 1983.72, price25: 2232.60, retail: 3221 },
-        { name: "Термоджеткис (желтые таблетки)", sku: "0117", vp: 20.50, svPrice: 1331.63, price42: 1496.28, price35: 1640.35, price25: 1846.17, retail: 2663 },
-        { name: "Cell-u-loss", sku: "0111", vp: 15.75, svPrice: 1360.30, price42: 1528.37, price35: 1675.43, price25: 1885.51, retail: 2721 },
-        { name: "Найтворкс", sku: "0036", vp: 75.00, svPrice: 4911.72, price42: 5489.90, price35: 5995.81, price25: 6718.54, retail: 9823 },
-        { name: "Коктейль H24 Восстановление силы", sku: "1437", vp: 43.00, svPrice: 2666.92, price42: 2931.81, price35: 3163.58, price25: 3494.69, retail: 5334 },
-        { name: "Грин Макс Селект", sku: "110К", vp: 38.91, svPrice: 3498.96, price42: 3818.31, price35: 4097.74, price25: 4496.92, retail: 6998 },
-        { name: "Найт Мод (новинка)", sku: "282К", vp: 37.45, svPrice: 2560.17, price42: 2876.49, price35: 3153.27, price25: 3548.68, retail: 5120 },
-        { name: "Коллаген Бьюти Комплекс", sku: "076К", vp: 37.10, svPrice: 3248.86, price42: 3650.39, price35: 4001.72, price25: 4503.63, retail: 6498 },
-        { name: "Коллаген Бьюти Комплекс (говяжий)", sku: "335К", vp: 37.10, svPrice: 3248.86, price42: 3650.39, price35: 4001.72, price25: 4503.63, retail: 6498 },
-        { name: "Микробиотик Макс", sku: "173К", vp: 27.10, svPrice: 2785.87, price42: 3130.30, price35: 3431.68, price25: 3862.22, retail: 5572 },
-        { name: "Гербалайфлайн Макс", sku: "0043", vp: 19.40, svPrice: 1545.74, price42: 1736.84, price35: 1904.05, price25: 2142.93, retail: 3091 },
-        { name: "Лифтофф апельсин", sku: "3151", vp: 15.95, svPrice: 1299.30, price42: 1459.95, price35: 1600.52, price25: 1801.33, retail: 2599 },
-        { name: "Шизандра Эдванс", sku: "0022", vp: 15.50, svPrice: 1144.36, price42: 1285.88, price35: 1409.71, price25: 1586.61, retail: 2289 },
-        { name: "Чай N-R-G", sku: "0102", vp: 14.75, svPrice: 1011.99, price42: 1137.02, price35: 1246.41, price25: 1402.70, retail: 2024 },
-        { name: "Формула 2 - комплекс витаминов для Мужчин", sku: "1745", vp: 13.55, svPrice: 1401.78, price42: 1575.12, price35: 1726.79, price25: 1943.46, retail: 2804 },
-        { name: "Формула 2 - комплекс витаминов для Женщин", sku: "2038", vp: 13.55, svPrice: 1401.78, price42: 1575.12, price35: 1726.79, price25: 1943.46, retail: 2804 },
-        { name: "CR7 DRIVE", sku: "1466", vp: 12.50, svPrice: 1254.16, price42: 1383.77, price35: 1497.18, price25: 1659.20, retail: 2508 },
-        { name: "ЭкстраКаль Эдванс", sku: "0020", vp: 10.25, svPrice: 749.69, price42: 842.31, price35: 923.36, price25: 1039.14, retail: 1499 },
-        { name: "Иммьюн Бустер", sku: "2273", vp: 9.50, svPrice: 755.79, price42: 849.19, price35: 930.92, price25: 1047.68, retail: 1512 },
-        { name: "Бутылка 2000 мл", sku: "371A", vp: 2.40, svPrice: 1840.98, price42: 1840.98, price35: 1840.98, price25: 1840.98, retail: 1840.98 },
-        { name: "Бутылка 900 мл", sku: "180A", vp: 2.20, svPrice: 1509.14, price42: 1509.14, price35: 1509.14, price25: 1509.14, retail: 1509.14 },
-        { name: "Шейкер набор (5 шт)", sku: "101M", vp: 1.65, svPrice: 922.32, price42: 922.32, price35: 922.32, price25: 922.32, retail: 922.32 },
-        { name: "Супер шейкер", sku: "8697", vp: 1.65, svPrice: 711.26, price42: 711.26, price35: 711.26, price25: 711.26, retail: 711.26 },
-        { name: "Мерная ложка белая (10 шт)", sku: "297A", vp: 1.20, svPrice: 669.78, price42: 669.78, price35: 669.78, price25: 669.78, retail: 669.78 },
-        { name: "Контейнер (10 шт)", sku: "302A", vp: 0.90, svPrice: 501.42, price42: 501.42, price35: 501.42, price25: 501.42, retail: 501.42 },
-        { name: "Спортивная бутылка 500 мл", sku: "8711", vp: 0.75, svPrice: 448.96, price42: 448.96, price35: 448.96, price25: 448.96, retail: 448.96 },
-        { name: "Шейкер (1 шт)", sku: "100M", vp: 0.35, svPrice: 203.74, price42: 203.74, price35: 203.74, price25: 203.74, retail: 203.74 },
-        { name: "Мерная ложка белая (1 шт)", sku: "719A", vp: 0.16, svPrice: 81.74, price42: 81.74, price35: 81.74, price25: 81.74, retail: 81.74 },
-        { name: "Эко-ложка для Бета Харт и H24", sku: "1842", vp: 0.10, svPrice: 84.00, price42: 84.00, price35: 84.00, price25: 84.00, retail: 84.00 },
-        { name: "Эко-ложка для Коллагена", sku: "2В08", vp: 0.10, svPrice: 84.18, price42: 84.18, price35: 84.18, price25: 84.18, retail: 84.18 },
-        { name: "Бумажный пакет Herbalife маленький", sku: "020N", vp: 0.00, svPrice: 12.20, price42: 12.20, price35: 12.20, price25: 12.20, retail: 12.20 }
+        { name: "Коктейль Формула 1 - Куриный крем-суп", sku: "395К", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, price15: 2941.79, retail: 3819 },
+        { name: "Коктейль Формула 1 - Ваниль", sku: "500К", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, price15: 2941.79, retail: 3819 },
+        { name: "Коктейль Формула 1 - Кокос", sku: "0930", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, price15: 2941.79, retail: 3819 },
+        { name: "Коктейль Формула 1 - Банан в карамели", sku: "326К", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, price15: 2941.79, retail: 3819 },
+        { name: "Коктейль Формула 1 - Манго", sku: "102К", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, price15: 2941.79, retail: 3819 },
+        { name: "Коктейль Формула 1 - Дыня", sku: "2793", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, price15: 2941.79, retail: 3819 },
+        { name: "Коктейль Формула 1 - Клубника", sku: "501К", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, price15: 2941.79, retail: 3819 },
+        { name: "Коктейль Формула 1 - Нежный шоколад", sku: "4468", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, price15: 2941.79, retail: 3819 },
+        { name: "Коктейль Формула 1 - Хрустящее печенье", sku: "4467", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, price15: 2941.79, retail: 3819 },
+        { name: "Коктейль Формула 1 - Дыня 2 кг", sku: "005К", vp: 99.60, svPrice: 7055.26, price42: 7927.41, price35: 8690.55, price25: 9780.74, price15: 10870.93, retail: 14111 },
+        { name: "Протеиновый кофе Латте Макиато", sku: "012К", vp: 23.95, svPrice: 2196.00, price42: 2402.33, price35: 2582.86, price25: 2840.77, price15: 3098.68, retail: 4392 },
+        { name: "Вечерний Коктейль Формула 1", sku: "1636", vp: 20.15, svPrice: 1604.30, price42: 1802.62, price35: 1976.16, price25: 2224.06, price15: 2471.96, retail: 3209 },
+        { name: "Формула 3 Белковый специализированный", sku: "0242", vp: 17.95, svPrice: 1627.48, price42: 1828.73, price35: 2004.83, price25: 2256.39, price15: 2507.95, retail: 3255 },
+        { name: "Протеиновая смесь для выпечки", sku: "528К", vp: 20.00, svPrice: 1770.22, price42: 1934.58, price35: 2078.39, price25: 2283.84, price15: 2489.29, retail: 3540 },
+        { name: "Травяной напиток Классический 51г", sku: "178К", vp: 19.95, svPrice: 1384.70, price42: 1555.89, price35: 1705.68, price25: 1919.67, price15: 2133.66, retail: 2769 },
+        { name: "Травяной напиток Лимон 51г", sku: "180К", vp: 19.95, svPrice: 1384.70, price42: 1555.89, price35: 1705.68, price25: 1919.67, price15: 2133.66, retail: 2769 },
+        { name: "Травяной напиток Малина 51г", sku: "182К", vp: 19.95, svPrice: 1384.70, price42: 1555.89, price35: 1705.68, price25: 1919.67, price15: 2133.66, retail: 2769 },
+        { name: "Травяной напиток Манго-питахайя 51г", sku: "530К", vp: 19.95, svPrice: 1384.70, price42: 1555.89, price35: 1705.68, price25: 1919.67, price15: 2133.66, retail: 2769 },
+        { name: "Травяной напиток Классический 102г", sku: "179К", vp: 34.95, svPrice: 2583.96, price42: 2903.31, price35: 3182.74, price25: 3581.92, price15: 3981.10, retail: 5168 },
+        { name: "Алоэ Манго", sku: "0757", vp: 24.95, svPrice: 1731.18, price42: 1945.12, price35: 2132.32, price25: 2399.74, price15: 2667.16, retail: 3462 },
+        { name: "Алоэ Классика", sku: "0006", vp: 24.95, svPrice: 1731.18, price42: 1945.12, price35: 2132.32, price25: 2399.74, price15: 2667.16, retail: 3462 },
+        { name: "Алоэ Клюква", sku: "1189", vp: 24.95, svPrice: 1731.18, price42: 1945.12, price35: 2132.32, price25: 2399.74, price15: 2667.16, retail: 3462 },
+        { name: "Овсяно-яблочный напиток", sku: "2864", vp: 22.95, svPrice: 1669.57, price42: 1875.99, price35: 2056.62, price25: 2314.65, price15: 2572.68, retail: 3339 },
+        { name: "Комплекс пищевых волокон", sku: "2865", vp: 22.95, svPrice: 1669.57, price42: 1875.99, price35: 2056.62, price25: 2314.65, price15: 2572.68, retail: 3339 },
+        { name: "Протеиновый батончик Лимонный (14 шт)", sku: "0260", vp: 7.70, svPrice: 1399.34, price42: 1466.49, price35: 1525.24, price25: 1609.18, price15: 1693.12, retail: 2799 },
+        { name: "Батончик ваниль в хрустящей карамели (28 шт)", sku: "001К", vp: 9.24, svPrice: 1678.72, price42: 1759.34, price35: 1829.88, price25: 1930.65, price15: 2031.42, retail: 3357 },
+        { name: "Батончик лимон в хрустящей карамели (28 шт)", sku: "002К", vp: 9.24, svPrice: 1678.72, price42: 1759.34, price35: 1829.88, price25: 1930.65, price15: 2031.42, retail: 3357 },
+        { name: "Батончик F1 Экспресс Тёмный шоколад (7 шт)", sku: "4472", vp: 14.00, svPrice: 1094.34, price42: 1229.61, price35: 1347.98, price25: 1517.07, price15: 1686.16, retail: 2189 },
+        { name: "Батончик F1 Экспресс Клюква и белый шоколад (7 шт)", sku: "4473", vp: 14.00, svPrice: 1094.34, price42: 1229.61, price35: 1347.98, price25: 1517.07, price15: 1686.16, retail: 2189 },
+        { name: "Протеиновые чипсы Барбекю (10 шт)", sku: "141К", vp: 11.75, svPrice: 1413.98, price42: 1544.18, price35: 1658.10, price25: 1820.85, price15: 1983.60, retail: 2828 },
+        { name: "Протеиновые чипсы Сметана и лук (10 шт)", sku: "142К", vp: 11.75, svPrice: 1413.98, price42: 1544.18, price35: 1658.10, price25: 1820.85, price15: 1983.60, retail: 2828 },
+        { name: "Фильтр для воды", sku: "0265", vp: 20.00, svPrice: 2104.50, price42: 2223.77, price35: 2328.13, price25: 2477.21, price15: 2626.29, retail: 4209 },
+        { name: "Сменный картридж для фильтра", sku: "0266", vp: 5.35, svPrice: 615.49, price42: 640.18, price35: 661.79, price25: 692.66, price15: 723.52, retail: 1231 },
+        { name: "Термо Комплит", sku: "0050", vp: 30.95, svPrice: 2253.34, price42: 2531.89, price35: 2775.62, price25: 3123.81, price15: 3472.00, retail: 4507 },
+        { name: "Фито Комплит", sku: "236К", vp: 29.50, svPrice: 2475.99, price42: 2767.13, price35: 3021.88, price25: 3385.81, price15: 3749.73, retail: 4952 },
+        { name: "Клеточный Активатор", sku: "3123", vp: 21.95, svPrice: 1610.40, price42: 1809.50, price35: 1983.72, price25: 2232.60, price15: 2481.48, retail: 3221 },
+        { name: "Термоджеткис (желтые таблетки)", sku: "0117", vp: 20.50, svPrice: 1331.63, price42: 1496.28, price35: 1640.35, price25: 1846.17, price15: 2051.98, retail: 2663 },
+        { name: "Cell-u-loss", sku: "0111", vp: 15.75, svPrice: 1360.30, price42: 1528.37, price35: 1675.43, price25: 1885.51, price15: 2095.59, retail: 2721 },
+        { name: "Найтворкс", sku: "0036", vp: 75.00, svPrice: 4911.72, price42: 5489.90, price35: 5995.81, price25: 6718.54, price15: 7441.27, retail: 9823 },
+        { name: "Коктейль H24 Восстановление силы", sku: "1437", vp: 43.00, svPrice: 2666.92, price42: 2931.81, price35: 3163.58, price25: 3494.69, price15: 3825.80, retail: 5334 },
+        { name: "Грин Макс Селект", sku: "110К", vp: 38.91, svPrice: 3498.96, price42: 3818.31, price35: 4097.74, price25: 4496.92, price15: 4896.10, retail: 6998 },
+        { name: "Найт Мод (новинка)", sku: "282К", vp: 37.45, svPrice: 2560.17, price42: 2876.49, price35: 3153.27, price25: 3548.68, price15: 3944.08, retail: 5120 },
+        { name: "Коллаген Бьюти Комплекс", sku: "076К", vp: 37.10, svPrice: 3248.86, price42: 3650.39, price35: 4001.72, price25: 4503.63, price15: 5005.54, retail: 6498 },
+        { name: "Коллаген Бьюти Комплекс (говяжий)", sku: "335К", vp: 37.10, svPrice: 3248.86, price42: 3650.39, price35: 4001.72, price25: 4503.63, price15: 5005.54, retail: 6498 },
+        { name: "Микробиотик Макс", sku: "173К", vp: 27.10, svPrice: 2785.87, price42: 3130.30, price35: 3431.68, price25: 3862.22, price15: 4292.75, retail: 5572 },
+        { name: "Гербалайфлайн Макс", sku: "0043", vp: 19.40, svPrice: 1545.74, price42: 1736.84, price35: 1904.05, price25: 2142.93, price15: 2381.81, retail: 3091 },
+        { name: "Лифтофф апельсин", sku: "3151", vp: 15.95, svPrice: 1299.30, price42: 1459.95, price35: 1600.52, price25: 1801.33, price15: 2002.14, retail: 2599 },
+        { name: "Шизандра Эдванс", sku: "0022", vp: 15.50, svPrice: 1144.36, price42: 1285.88, price35: 1409.71, price25: 1586.61, price15: 1763.51, retail: 2289 },
+        { name: "Чай N-R-G", sku: "0102", vp: 14.75, svPrice: 1011.99, price42: 1137.02, price35: 1246.41, price25: 1402.70, price15: 1558.98, retail: 2024 },
+        { name: "Формула 2 - комплекс витаминов для Мужчин", sku: "1745", vp: 13.55, svPrice: 1401.78, price42: 1575.12, price35: 1726.79, price25: 1943.46, price15: 2160.13, retail: 2804 },
+        { name: "Формула 2 - комплекс витаминов для Женщин", sku: "2038", vp: 13.55, svPrice: 1401.78, price42: 1575.12, price35: 1726.79, price25: 1943.46, price15: 2160.13, retail: 2804 },
+        { name: "CR7 DRIVE", sku: "1466", vp: 12.50, svPrice: 1254.16, price42: 1383.77, price35: 1497.18, price25: 1659.20, price15: 1821.22, retail: 2508 },
+        { name: "ЭкстраКаль Эдванс", sku: "0020", vp: 10.25, svPrice: 749.69, price42: 842.31, price35: 923.36, price25: 1039.14, price15: 1154.91, retail: 1499 },
+        { name: "Иммьюн Бустер", sku: "2273", vp: 9.50, svPrice: 755.79, price42: 849.19, price35: 930.92, price25: 1047.68, price15: 1164.43, retail: 1512 },
+        { name: "Бутылка 2000 мл", sku: "371A", vp: 2.40, svPrice: 1840.98, price42: 1840.98, price35: 1840.98, price25: 1840.98, price15: 1840.98, retail: 1840.98 },
+        { name: "Бутылка 900 мл", sku: "180A", vp: 2.20, svPrice: 1509.14, price42: 1509.14, price35: 1509.14, price25: 1509.14, price15: 1509.14, retail: 1509.14 },
+        { name: "Шейкер набор (5 шт)", sku: "101M", vp: 1.65, svPrice: 922.32, price42: 922.32, price35: 922.32, price25: 922.32, price15: 922.32, retail: 922.32 },
+        { name: "Супер шейкер", sku: "8697", vp: 1.65, svPrice: 711.26, price42: 711.26, price35: 711.26, price25: 711.26, price15: 711.26, retail: 711.26 },
+        { name: "Мерная ложка белая (10 шт)", sku: "297A", vp: 1.20, svPrice: 669.78, price42: 669.78, price35: 669.78, price25: 669.78, price15: 669.78, retail: 669.78 },
+        { name: "Контейнер (10 шт)", sku: "302A", vp: 0.90, svPrice: 501.42, price42: 501.42, price35: 501.42, price25: 501.42, price15: 501.42, retail: 501.42 },
+        { name: "Спортивная бутылка 500 мл", sku: "8711", vp: 0.75, svPrice: 448.96, price42: 448.96, price35: 448.96, price25: 448.96, price15: 448.96, retail: 448.96 },
+        { name: "Шейкер (1 шт)", sku: "100M", vp: 0.35, svPrice: 203.74, price42: 203.74, price35: 203.74, price25: 203.74, price15: 203.74, retail: 203.74 },
+        { name: "Мерная ложка белая (1 шт)", sku: "719A", vp: 0.16, svPrice: 81.74, price42: 81.74, price35: 81.74, price25: 81.74, price15: 81.74, retail: 81.74 },
+        { name: "Эко-ложка для Бета Харт и H24", sku: "1842", vp: 0.10, svPrice: 84.18, price42: 84.18, price35: 84.18, price25: 84.18, price15: 84.18, retail: 84.18 },
+        { name: "Эко-ложка для Коллагена", sku: "2В08", vp: 0.10, svPrice: 84.18, price42: 84.18, price35: 84.18, price25: 84.18, price15: 84.18, retail: 84.18 },
+        { name: "Бумажный пакет Herbalife маленький", sku: "020N", vp: 0.00, svPrice: 12.20, price42: 12.20, price35: 12.20, price25: 12.20, price15: 12.20, retail: 12.20 }
     ];
 
     let stock = {};
@@ -436,9 +436,19 @@
         if(discountPercent === 42) return prod.price42;
         if(discountPercent === 35) return prod.price35;
         if(discountPercent === 25) return prod.price25;
-        if(discountPercent === 15) return prod.retail * 0.85;
-        if(discountPercent === 50) return prod.svPrice; // для клуба
+        if(discountPercent === 15) return prod.price15;
+        if(discountPercent === 50) return prod.svPrice;
         return prod.retail;
+    }
+    
+    function getIncomeByDiscount(prod, discountPercent, qty) {
+        const retail = prod.retail;
+        if(discountPercent === 42) return retail * 0.08 * qty;
+        if(discountPercent === 35) return retail * 0.15 * qty;
+        if(discountPercent === 25) return retail * 0.25 * qty;
+        if(discountPercent === 15) return retail * 0.35 * qty;
+        if(discountPercent === 0) return (retail - prod.svPrice) * qty;
+        return 0;
     }
 
     function getCurrentMonthIncome() {
@@ -468,8 +478,7 @@
             totalIncome += (item.totalPrice - (item.svPrice * item.qty));
             if(type === 'ПРОДАЖА' && discountPercent === 0) retailAdded += item.totalPrice;
             if(type === 'ПРОДАЖА' && discountPercent !== null && discountPercent > 0 && discountPercent !== 50) {
-                const inc = (getPriceByDiscount(products.find(p=>p.sku===item.sku), discountPercent) - item.svPrice) * item.qty;
-                companyIncome += inc;
+                companyIncome += getIncomeByDiscount(products.find(p=>p.sku===item.sku), discountPercent, item.qty);
             }
         });
         if(type === 'ПРОДАЖА' && discountPercent === 0) retailIncomeTotal += retailAdded;
@@ -603,7 +612,11 @@
                 });
                 if(!canProceed) return;
                 items.forEach(item => { stock[item.sku] -= item.qty; });
+                const totalSum = items.reduce((s,i)=>s+i.totalPrice,0);
+                const totalPoints = items.reduce((s,i)=>s+i.totalPoints,0);
+                const yourIncome = items.reduce((s,i)=>s + getIncomeByDiscount(products.find(p=>p.sku===i.sku), discountPercent, i.qty), 0);
                 addOperation('ПРОДАЖА', `ПРОДАЖА (скидка ${discountPercent}%) - ${clientName}`, items, discountPercent, clientName);
+                showCustomModal('🧾 ЧЕК', `<div>${clientName}</div><div>Сумма: ${totalSum.toFixed(2)} ₽</div><div>Очки: ${totalPoints.toFixed(1)}</div><div>💚 Твой доход: ~${yourIncome.toFixed(2)} ₽</div>`, () => {});
                 computeStats();
                 renderProducts();
             });
@@ -622,7 +635,7 @@
                 const qty = parseInt(document.getElementById(`qty_${p.sku}`).value) || 0;
                 if(qty > 0) {
                     if((stock[p.sku]||0) < qty) { alert(`Не хватает ${p.name}`); canProceed = false; return; }
-                    const price = p.svPrice; // 50% скидка = цена СВ
+                    const price = p.svPrice;
                     items.push({ name: p.name, qty: qty, sku: p.sku, svPrice: p.svPrice, totalPrice: price * qty, totalPoints: p.vp * qty });
                 }
             });
@@ -639,14 +652,14 @@
         products.forEach(p => {
             html += `<div class="modal-product-row"><span class="modal-product-name">${p.name} (${p.sku}) [в наличии: ${stock[p.sku]||0}]</span><input type="number" id="qty_${p.sku}" class="modal-qty-input" value="0" min="0" step="1"></div>`;
         });
-        showCustomModal('📦 ЛИЧНОЕ СПИСАНИЕ (полная стоимость для отчёта)', html, () => {
+        showCustomModal('📦 ЛИЧНОЕ СПИСАНИЕ (списание по цене СВ)', html, () => {
             const items = [];
             let canProceed = true;
             products.forEach(p => {
                 const qty = parseInt(document.getElementById(`qty_${p.sku}`).value) || 0;
                 if(qty > 0) {
                     if((stock[p.sku]||0) < qty) { alert(`Не хватает ${p.name}`); canProceed = false; return; }
-                    items.push({ name: p.name, qty: qty, sku: p.sku, svPrice: p.svPrice, totalPrice: 0, totalPoints: p.vp * qty });
+                    items.push({ name: p.name, qty: qty, sku: p.sku, svPrice: p.svPrice, totalPrice: p.svPrice * qty, totalPoints: p.vp * qty });
                 }
             });
             if(!canProceed) return;
@@ -824,8 +837,10 @@
             const clientName = document.getElementById('clientName').value.trim() || 'Клиент';
             const price = getPriceByDiscount(prod, discountPercent);
             const total = price;
+            const income = getIncomeByDiscount(prod, discountPercent, 1);
             stock[sku] -= 1;
             addOperation('ПРОДАЖА', `ПРОДАЖА (скидка ${discountPercent}%) - ${clientName}`, [{ name: prod.name, qty: 1, sku: sku, svPrice: prod.svPrice, totalPrice: total, totalPoints: prod.vp }], discountPercent, clientName);
+            showCustomModal('🧾 ЧЕК', `<div>${clientName}</div><div>Сумма: ${total.toFixed(2)} ₽</div><div>Очки: ${prod.vp}</div><div>💚 Твой доход: ~${income.toFixed(2)} ₽</div>`, () => {});
             computeStats();
             renderProducts();
         });
@@ -1004,12 +1019,17 @@
         if(totals) {
             csv += "\n" + totals.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",") + "\n";
         }
+        
         const blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
         link.download = filename;
+        link.style.display = 'none';
+        document.body.appendChild(link);
         link.click();
-        URL.revokeObjectURL(link.href);
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
     }
     
     function exportStock() {
@@ -1038,7 +1058,6 @@
     }
     
     function exportSale() {
-        // Группируем по чеку (id операции)
         const saleOps = operations.filter(op => op.type === "ПРОДАЖА");
         const rows = [];
         saleOps.forEach(op => {
@@ -1058,14 +1077,14 @@
     function exportPersonal() {
         const rows = operations.filter(op => op.type === "ЛИЧНОЕ").flatMap(op => {
             if(op.items && op.items.length) {
-                return op.items.map(item => [op.date, item.name, item.qty, item.totalPoints || 0, 0]);
+                return op.items.map(item => [op.date, item.name, item.qty, item.totalPoints || 0, (item.svPrice * item.qty).toFixed(2)]);
             }
             return [[op.date, op.title, "", "", ""]];
         });
         if(!rows.length) { alert("Нет личного списания"); return; }
-        let totalQty = 0, totalVp = 0;
-        rows.forEach(r => { totalQty += r[2] || 0; totalVp += r[3] || 0; });
-        const totals = [`ИТОГО`, ``, totalQty, totalVp.toFixed(1), ``];
+        let totalQty = 0, totalVp = 0, totalSum = 0;
+        rows.forEach(r => { totalQty += r[2] || 0; totalVp += r[3] || 0; totalSum += parseFloat(r[4]) || 0; });
+        const totals = [`ИТОГО`, ``, totalQty, totalVp.toFixed(1), totalSum.toFixed(2)];
         downloadCSV("личное_списание.csv", rows, ["Дата","Товар","Кол-во","Очки VP","Сумма (по СВ)"], totals);
     }
     
