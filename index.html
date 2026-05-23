@@ -4,67 +4,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
     <title>СКЛАД Herbalife 🌿</title>
-    
-    <script>
-        (function() {
-            const canvas = document.createElement('canvas');
-            canvas.width = 180;
-            canvas.height = 180;
-            const ctx = canvas.getContext('2d');
-            
-            ctx.fillStyle = '#B29CD6';
-            ctx.beginPath();
-            if (!CanvasRenderingContext2D.prototype.roundRect) {
-                CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
-                    if (w < 2 * r) r = w / 2;
-                    if (h < 2 * r) r = h / 2;
-                    this.moveTo(x+r, y);
-                    this.lineTo(x+w-r, y);
-                    this.quadraticCurveTo(x+w, y, x+w, y+r);
-                    this.lineTo(x+w, y+h-r);
-                    this.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
-                    this.lineTo(x+r, y+h);
-                    this.quadraticCurveTo(x, y+h, x, y+h-r);
-                    this.lineTo(x, y+r);
-                    this.quadraticCurveTo(x, y, x+r, y);
-                    return this;
-                };
-            }
-            ctx.roundRect(0, 0, 180, 180, 32);
-            ctx.fill();
-            
-            ctx.font = '100px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
-            ctx.fillStyle = 'white';
-            ctx.textAlign = 'center';
-            ctx.textBaseline = 'middle';
-            ctx.fillText('📦', 90, 95);
-            
-            const iconUrl = canvas.toDataURL('image/png');
-            const favicon = document.createElement('link');
-            favicon.rel = 'icon';
-            favicon.type = 'image/png';
-            favicon.href = iconUrl;
-            document.head.appendChild(favicon);
-            
-            const appleIcon = document.createElement('link');
-            appleIcon.rel = 'apple-touch-icon';
-            appleIcon.href = iconUrl;
-            document.head.appendChild(appleIcon);
-        })();
-    </script>
-    
+    <link rel="icon" type="image/png" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='20' fill='%23B29CD6'/%3E%3Ctext x='50' y='72' font-size='55' text-anchor='middle' fill='white'%3E📦%3C/text%3E%3C/svg%3E">
     <meta name="theme-color" content="#B29CD6">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Herbalife склад">
-    
+    <meta name="apple-mobile-web-app-title" content="HerbaFlow">
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
             font-family: system-ui, -apple-system, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: linear-gradient(145deg, #E8DDFF 0%, #D9C9FF 50%, #C8B6FE 100%);
             min-height: 100vh;
-            padding: 20px 12px 60px;
+            padding: 20px 12px 80px;
         }
         .app-container {
             max-width: 750px;
@@ -93,7 +44,6 @@
         .btn-danger { background: #FFE0E5; color: #BB3B5C; }
         .btn-excel { background: #D9E6DB; color: #2C5A2E; }
         .btn-report { background: #E6D9FF; color: #5B3A7C; }
-        .btn-whatsapp { background: #25D366; color: white; }
         
         .filter-buttons { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 10px; justify-content: center; }
         .filter-btn { padding: 6px 10px; border-radius: 30px; border: none; background: #EEE4FF; font-size: 0.7rem; font-weight: 600; cursor: pointer; }
@@ -208,6 +158,7 @@
             <button class="btn btn-excel" id="exportSaleBtn">📊 Excel: Продажи</button>
             <button class="btn btn-excel" id="exportPersonalBtn">📊 Excel: Личное</button>
             <button class="btn btn-excel" id="exportClubBtn">📊 Excel: Клуб</button>
+            <button class="btn btn-report" id="monthlyReportBtn">📊 Отчёты по месяцам</button>
         </div>
         <div class="backup-buttons">
             <button class="btn btn-primary" id="backupSaveBtn">💾 Резервная копия</button>
@@ -218,127 +169,7 @@
 </div>
 
 <script>
-    // ======================= ЛИЦЕНЗИЯ =======================
-    let adminMode = false;
-    
-    function getDeviceId() {
-        let id = localStorage.getItem("device_id");
-        if(!id) {
-            id = Math.random().toString(36).substring(2, 10).toUpperCase() + '-' + 
-                 Math.random().toString(36).substring(2, 6).toUpperCase() + '-' +
-                 Math.random().toString(36).substring(2, 6).toUpperCase();
-            localStorage.setItem("device_id", id);
-        }
-        return id;
-    }
-    
-    function checkLicense() {
-        const licensed = localStorage.getItem("licensed");
-        if(licensed === "true") return true;
-        const deviceId = getDeviceId();
-        document.getElementById("deviceCode").innerText = deviceId;
-        document.getElementById("licenseScreen").style.display = "flex";
-        document.getElementById("mainApp").style.display = "none";
-        return false;
-    }
-    
-    function generateKeyForDevice(deviceCode) {
-        let hash = 0;
-        for(let i = 0; i < deviceCode.length; i++) {
-            hash = ((hash << 5) - hash) + deviceCode.charCodeAt(i);
-            hash |= 0;
-        }
-        hash = Math.abs(hash);
-        const key = hash.toString(36).substring(0, 15).toUpperCase();
-        return key;
-    }
-    
-    function validateKey(deviceCode, userKey) {
-        const expectedKey = generateKeyForDevice(deviceCode);
-        return userKey === expectedKey;
-    }
-    
-    function activateLicense(key) {
-        const deviceId = getDeviceId();
-        if(validateKey(deviceId, key)) {
-            localStorage.setItem("licensed", "true");
-            return true;
-        }
-        return false;
-    }
-    
-    document.getElementById("activateBtn")?.addEventListener("click", () => {
-        const key = document.getElementById("licenseKeyInput").value.trim().toUpperCase();
-        if(activateLicense(key)) {
-            location.reload();
-        } else {
-            alert("❌ Неверный ключ");
-        }
-    });
-    
-    // ======================= АДМИН-ПАНЕЛЬ (5 кликов по заголовку) =======================
-    let clickCount = 0;
-    let clickTimer = null;
-    
-    function showAdminPanel() {
-        const modal = document.createElement('div');
-        modal.className = 'modal-overlay';
-        modal.innerHTML = `
-            <div class="modal-card">
-                <h3>🔐 Админ-панель</h3>
-                <div class="admin-panel">
-                    <label>Код устройства покупателя:</label>
-                    <input type="text" id="adminDeviceCode" placeholder="Например: X7G9-4K2L-M1N8" style="width:100%; margin:10px 0; padding:10px;">
-                    <button class="btn btn-primary" id="adminGenerateBtn" style="width:100%;">🔑 Сгенерировать ключ</button>
-                    <div id="adminKeyResult" class="key-result" style="display:none;"></div>
-                    <hr style="margin:15px 0;">
-                    <p style="font-size:0.7rem; color:#666;">Сгенерированный ключ отправьте покупателю. Каждый ключ уникален для каждого устройства.</p>
-                </div>
-                <div class="modal-buttons">
-                    <button class="btn" id="adminCloseBtn">Закрыть</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-        setTimeout(() => modal.classList.add('active'), 10);
-        
-        modal.querySelector('#adminGenerateBtn').onclick = () => {
-            const deviceCode = modal.querySelector('#adminDeviceCode').value.trim().toUpperCase();
-            if(deviceCode.length < 10) {
-                alert("Введите корректный код устройства (например, X7G9-4K2L-M1N8)");
-                return;
-            }
-            const key = generateKeyForDevice(deviceCode);
-            const resultDiv = modal.querySelector('#adminKeyResult');
-            resultDiv.innerHTML = `✅ Ключ для устройства:<br><strong style="font-size:1.3rem;">${key}</strong><br>Отправьте его покупателю`;
-            resultDiv.style.display = 'block';
-        };
-        
-        modal.querySelector('#adminCloseBtn').onclick = () => modal.remove();
-    }
-    
-    function setupAdminAccess() {
-        const header = document.getElementById('mainHeader');
-        if(header) {
-            header.addEventListener('click', (e) => {
-                e.preventDefault();
-                clickCount++;
-                if(clickTimer) clearTimeout(clickTimer);
-                clickTimer = setTimeout(() => { clickCount = 0; }, 800);
-                if(clickCount >= 5) {
-                    clickCount = 0;
-                    const masterCode = prompt("🔐 Введите мастер-код для входа в админ-панель:");
-                    if(masterCode === "HERBALIFE2026") {
-                        showAdminPanel();
-                    } else if(masterCode) {
-                        alert("❌ Неверный мастер-код");
-                    }
-                }
-            });
-        }
-    }
-    
-    // ======================= ПОЛНЫЙ ПРАЙС-ЛИСТ =======================
+    // ======================= ПРАЙС-ЛИСТ (ВСЕ ТОВАРЫ) =======================
     const products = [
         { name: "Коктейль Формула 1 - Куриный крем-суп", sku: "395К", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, price15: 2941.79, retail: 3819 },
         { name: "Коктейль Формула 1 - Ваниль", sku: "500К", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, price15: 2941.79, retail: 3819 },
@@ -408,30 +239,104 @@
         { name: "Бумажный пакет Herbalife маленький", sku: "020N", vp: 0.00, svPrice: 12.20, price42: 12.20, price35: 12.20, price25: 12.20, price15: 12.20, retail: 12.20 }
     ];
 
+    // ======================= ГЛОБАЛЬНЫЕ ПЕРЕМЕННЫЕ =======================
     let stock = {};
     let operations = [];
     let retailIncomeTotal = 0;
     let companyCheckTotal = 0;
     let currentFilter = "all";
 
-    function loadData() {
-        const savedStock = localStorage.getItem("herba_stock");
-        if(savedStock) stock = JSON.parse(savedStock);
-        else products.forEach(p => stock[p.sku] = 0);
-        const savedOps = localStorage.getItem("herba_operations");
-        if(savedOps) operations = JSON.parse(savedOps);
-        const savedIncome = localStorage.getItem("retail_income");
-        retailIncomeTotal = savedIncome ? parseFloat(savedIncome) : 0;
-        const savedCompany = localStorage.getItem("company_check");
-        companyCheckTotal = savedCompany ? parseFloat(savedCompany) : 0;
+    // ======================= ЛИЦЕНЗИЯ =======================
+    function getDeviceId() {
+        let id = localStorage.getItem("device_id");
+        if(!id) {
+            id = Math.random().toString(36).substring(2, 10).toUpperCase() + '-' + 
+                 Math.random().toString(36).substring(2, 6).toUpperCase() + '-' +
+                 Math.random().toString(36).substring(2, 6).toUpperCase();
+            localStorage.setItem("device_id", id);
+        }
+        return id;
     }
-    function saveAll() {
-        localStorage.setItem("herba_stock", JSON.stringify(stock));
-        localStorage.setItem("herba_operations", JSON.stringify(operations));
-        localStorage.setItem("retail_income", retailIncomeTotal);
-        localStorage.setItem("company_check", companyCheckTotal);
+    
+    function generateKeyForDevice(deviceCode) {
+        let hash = 0;
+        for(let i = 0; i < deviceCode.length; i++) {
+            hash = ((hash << 5) - hash) + deviceCode.charCodeAt(i);
+            hash |= 0;
+        }
+        return Math.abs(hash).toString(36).substring(0, 15).toUpperCase();
     }
-
+    
+    function activateLicense(key) {
+        const deviceId = getDeviceId();
+        if(generateKeyForDevice(deviceId) === key) {
+            localStorage.setItem("licensed", "true");
+            return true;
+        }
+        return false;
+    }
+    
+    function checkLicense() {
+        if(localStorage.getItem("licensed") === "true") return true;
+        document.getElementById("deviceCode").innerText = getDeviceId();
+        document.getElementById("licenseScreen").style.display = "flex";
+        document.getElementById("mainApp").style.display = "none";
+        return false;
+    }
+    
+    document.getElementById("activateBtn")?.addEventListener("click", () => {
+        if(activateLicense(document.getElementById("licenseKeyInput").value.trim().toUpperCase())) {
+            location.reload();
+        } else {
+            alert("❌ Неверный ключ");
+        }
+    });
+    
+    // ======================= АДМИН-ПАНЕЛЬ =======================
+    let clickCount = 0, clickTimer = null;
+    
+    function showAdminPanel() {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `
+            <div class="modal-card">
+                <h3>🔐 Админ-панель</h3>
+                <div class="admin-panel">
+                    <label>Код устройства покупателя:</label>
+                    <input type="text" id="adminDeviceCode" placeholder="X7G9-4K2L-M1N8" style="width:100%; margin:10px 0; padding:10px;">
+                    <button class="btn btn-primary" id="adminGenerateBtn">🔑 Сгенерировать ключ</button>
+                    <div id="adminKeyResult" class="key-result" style="display:none;"></div>
+                </div>
+                <button class="btn" id="adminCloseBtn">Закрыть</button>
+            </div>
+        `;
+        document.body.appendChild(modal);
+        setTimeout(() => modal.classList.add('active'), 10);
+        modal.querySelector('#adminGenerateBtn').onclick = () => {
+            const code = modal.querySelector('#adminDeviceCode').value.trim().toUpperCase();
+            if(code.length < 10) { alert("Введите корректный код"); return; }
+            modal.querySelector('#adminKeyResult').innerHTML = `✅ Ключ: <strong>${generateKeyForDevice(code)}</strong>`;
+            modal.querySelector('#adminKeyResult').style.display = 'block';
+        };
+        modal.querySelector('#adminCloseBtn').onclick = () => modal.remove();
+    }
+    
+    function setupAdminAccess() {
+        const header = document.getElementById('mainHeader');
+        if(header) {
+            header.onclick = () => {
+                clickCount++;
+                if(clickTimer) clearTimeout(clickTimer);
+                clickTimer = setTimeout(() => { clickCount = 0; }, 800);
+                if(clickCount >= 5) {
+                    clickCount = 0;
+                    if(prompt("Введите мастер-код:") === "HERBALIFE2026") showAdminPanel();
+                }
+            };
+        }
+    }
+    
+    // ======================= ВСПОМОГАТЕЛЬНЫЕ ФУНКЦИИ =======================
     function getPriceByDiscount(prod, discountPercent) {
         if(discountPercent === 42) return prod.price42;
         if(discountPercent === 35) return prod.price35;
@@ -441,27 +346,38 @@
         return prod.retail;
     }
     
-    function getIncomeByDiscount(prod, discountPercent, qty) {
-        const retail = prod.retail;
-        if(discountPercent === 42) return retail * 0.08 * qty;
-        if(discountPercent === 35) return retail * 0.15 * qty;
-        if(discountPercent === 25) return retail * 0.25 * qty;
-        if(discountPercent === 15) return retail * 0.35 * qty;
-        if(discountPercent === 0) return (retail - prod.svPrice) * qty;
-        return 0;
+    function getIncomeByDiscount(prod, discountPercent, qty, totalSum) {
+        if(discountPercent === 0) return (prod.retail - prod.svPrice) * qty;
+        const percent = discountPercent === 42 ? 0.08 : discountPercent === 35 ? 0.15 : discountPercent === 25 ? 0.25 : 0.35;
+        return totalSum * percent;
     }
-
+    
+    function loadData() {
+        const savedStock = localStorage.getItem("herba_stock");
+        if(savedStock) stock = JSON.parse(savedStock);
+        else products.forEach(p => stock[p.sku] = 0);
+        const savedOps = localStorage.getItem("herba_operations");
+        if(savedOps) operations = JSON.parse(savedOps);
+        retailIncomeTotal = parseFloat(localStorage.getItem("retail_income")) || 0;
+        companyCheckTotal = parseFloat(localStorage.getItem("company_check")) || 0;
+    }
+    
+    function saveAll() {
+        localStorage.setItem("herba_stock", JSON.stringify(stock));
+        localStorage.setItem("herba_operations", JSON.stringify(operations));
+        localStorage.setItem("retail_income", retailIncomeTotal);
+        localStorage.setItem("company_check", companyCheckTotal);
+    }
+    
     function getCurrentMonthIncome() {
         const now = new Date();
-        const currentMonth = now.getMonth();
-        const currentYear = now.getFullYear();
         let total = 0;
         operations.forEach(op => {
             if(op.type === "ПРОДАЖА" && op.totalIncome) {
                 let parts = op.date.split(',')[0].split('.');
                 if(parts.length === 3) {
                     let date = new Date(parts[2], parts[1]-1, parts[0]);
-                    if(date.getMonth() === currentMonth && date.getFullYear() === currentYear) {
+                    if(date.getMonth() === now.getMonth() && date.getFullYear() === now.getFullYear()) {
                         total += op.totalIncome;
                     }
                 }
@@ -469,384 +385,7 @@
         });
         return total;
     }
-
-    function addOperation(type, title, items, discountPercent = null, clientName = null, extraPayment = null) {
-        let totalSum = 0, totalPoints = 0, totalIncome = 0, companyIncome = 0, retailAdded = 0;
-        items.forEach(item => {
-            totalSum += item.totalPrice;
-            totalPoints += item.totalPoints;
-            totalIncome += getIncomeByDiscount(products.find(p=>p.sku===item.sku), discountPercent, item.qty);
-            if(type === 'ПРОДАЖА' && discountPercent === 0) retailAdded += item.totalPrice;
-            if(type === 'ПРОДАЖА' && discountPercent !== null && discountPercent > 0 && discountPercent !== 50) {
-                companyIncome += getIncomeByDiscount(products.find(p=>p.sku===item.sku), discountPercent, item.qty);
-            }
-        });
-        if(type === 'ПРОДАЖА' && discountPercent === 0) retailIncomeTotal += retailAdded;
-        if(type === 'ПРОДАЖА' && discountPercent !== null && discountPercent > 0 && discountPercent !== 50) companyCheckTotal += companyIncome;
-        
-        const op = {
-            id: Date.now(),
-            date: new Date().toLocaleString(),
-            type: type,
-            title: title,
-            items: items.map(i => ({ name: i.name, qty: i.qty, sku: i.sku, svPrice: i.svPrice, totalPrice: i.totalPrice, totalPoints: i.totalPoints, action: i.action })),
-            totalSum: totalSum,
-            totalPoints: totalPoints,
-            totalIncome: totalIncome,
-            discountPercent: discountPercent,
-            clientName: clientName,
-            extraPayment: extraPayment
-        };
-        operations.unshift(op);
-        saveAll();
-        renderHistory();
-        computeStats();
-        return op;
-    }
-
-    function reverseOperation(op) {
-        if(op.items && op.items.length) {
-            op.items.forEach(item => {
-                if(op.type === 'ПРИХОД') {
-                    stock[item.sku] = (stock[item.sku] || 0) - item.qty;
-                } 
-                else if(op.type === 'ОСНОВНОЙ СКЛАД') {
-                    stock[item.sku] = (stock[item.sku] || 0) - item.qty;
-                }
-                else if(op.type === 'ПРОДАЖА') {
-                    stock[item.sku] = (stock[item.sku] || 0) + item.qty;
-                    if(op.discountPercent === 0 && op.totalSum) retailIncomeTotal -= op.totalSum;
-                    if(op.discountPercent !== null && op.discountPercent > 0 && op.totalIncome) companyCheckTotal -= op.totalIncome;
-                }
-                else if(op.type === 'ЛИЧНОЕ' || op.type === 'КЛУБ') {
-                    stock[item.sku] = (stock[item.sku] || 0) + item.qty;
-                }
-                else if(op.type === 'ОБМЕН') {
-                    if(item.action === 'give') {
-                        stock[item.sku] = (stock[item.sku] || 0) + item.qty;
-                    } else if(item.action === 'take') {
-                        stock[item.sku] = (stock[item.sku] || 0) - item.qty;
-                    }
-                }
-            });
-        }
-        saveAll();
-        computeStats();
-        renderProducts();
-    }
-
-    function deleteOperation(opId) {
-        const index = operations.findIndex(op => op.id === opId);
-        if(index === -1) return;
-        const op = operations[index];
-        
-        let confirmMessage = `Удалить операцию?\n\n`;
-        if(op.type === 'ПРИХОД') confirmMessage += `📦 ПРИХОД: ${op.title}\n\nСклад вернётся в состояние ДО прихода`;
-        else if(op.type === 'ОСНОВНОЙ СКЛАД') confirmMessage += `🏠 ОСНОВНОЙ СКЛАД: ${op.title}\n\nСклад вернётся в состояние ДО добавления`;
-        else if(op.type === 'ПРОДАЖА') confirmMessage += `📤 ПРОДАЖА: ${op.title}\n\nСклад вернётся в состояние ДО продажи (товары вернутся)`;
-        else if(op.type === 'ЛИЧНОЕ') confirmMessage += `🎁 ЛИЧНОЕ СПИСАНИЕ: ${op.title}\n\nСклад вернётся в состояние ДО списания`;
-        else if(op.type === 'КЛУБ') confirmMessage += `🎪 КЛУБ: ${op.title}\n\nСклад вернётся в состояние ДО списания для клуба`;
-        else if(op.type === 'ОБМЕН') confirmMessage += `🔄 ОБМЕН: ${op.title}\n\nСклад вернётся в состояние ДО обмена`;
-        else confirmMessage += `${op.title}\n\nСклад вернётся в состояние ДО операции`;
-        
-        if(confirm(confirmMessage)) {
-            reverseOperation(op);
-            operations.splice(index, 1);
-            saveAll();
-            computeStats();
-            renderProducts();
-            renderHistory();
-            alert(`✅ Операция удалена, склад восстановлен`);
-        }
-    }
-
-    function showCustomModal(title, contentHtml, onConfirm) {
-        const modal = document.createElement('div');
-        modal.className = 'modal-overlay';
-        modal.innerHTML = `<div class="modal-card"><h3>${title}</h3>${contentHtml}<div class="modal-buttons"><button class="btn btn-primary" id="modalConfirm">✅ Подтвердить</button><button class="btn" id="modalCancel">Отмена</button></div></div>`;
-        document.body.appendChild(modal);
-        setTimeout(() => modal.classList.add('active'), 10);
-        modal.querySelector('#modalConfirm').onclick = () => { if(onConfirm) onConfirm(); modal.remove(); };
-        modal.querySelector('#modalCancel').onclick = () => modal.remove();
-    }
-
-    function showMassIncome() {
-        let html = '';
-        products.forEach(p => {
-            html += `<div class="modal-product-row"><span class="modal-product-name">${p.name} (${p.sku})</span><input type="number" id="qty_${p.sku}" class="modal-qty-input" value="0" min="0" step="1"></div>`;
-        });
-        showCustomModal('➕ ПРИХОД товара', html, () => {
-            const items = [];
-            products.forEach(p => {
-                const qty = parseInt(document.getElementById(`qty_${p.sku}`).value) || 0;
-                if(qty > 0) {
-                    stock[p.sku] = (stock[p.sku]||0) + qty;
-                    items.push({ name: p.name, qty: qty, sku: p.sku, svPrice: p.svPrice, totalPrice: p.svPrice * qty, totalPoints: p.vp * qty });
-                }
-            });
-            if(items.length) addOperation('ПРИХОД', `ПРИХОД (поставка)`, items);
-            computeStats();
-            renderProducts();
-        });
-    }
-
-    function showMassSale() {
-        let discountPercent = 0, clientName = '';
-        const step1Html = `<div><label>Скидка (%):</label><select id="discountSelect" style="width:100%"><option value="0">0% (розница)</option><option value="15">15%</option><option value="25">25%</option><option value="35">35%</option><option value="42">42%</option></select></div><div><label>Имя клиента:</label><input id="clientName" placeholder="Например: Саина"></div>`;
-        showCustomModal('📤 ПРОДАЖА - шаг 1', step1Html, () => {
-            discountPercent = parseInt(document.getElementById('discountSelect').value);
-            clientName = document.getElementById('clientName').value.trim() || 'Клиент';
-            let html = `<div style="margin-bottom:8px;"><strong>Скидка: ${discountPercent}% | Клиент: ${clientName}</strong></div>`;
-            products.forEach(p => {
-                html += `<div class="modal-product-row"><span class="modal-product-name">${p.name} (${p.sku}) [в наличии: ${stock[p.sku]||0}]</span><input type="number" id="qty_${p.sku}" class="modal-qty-input" value="0" min="0" step="1"></div>`;
-            });
-            showCustomModal('📤 ПРОДАЖА - шаг 2 (укажите количество)', html, () => {
-                const items = [];
-                let canProceed = true;
-                products.forEach(p => {
-                    const qty = parseInt(document.getElementById(`qty_${p.sku}`).value) || 0;
-                    if(qty > 0) {
-                        if((stock[p.sku]||0) < qty) { alert(`Не хватает ${p.name}`); canProceed = false; return; }
-                        const price = getPriceByDiscount(p, discountPercent);
-                        items.push({ name: p.name, qty: qty, sku: p.sku, svPrice: p.svPrice, totalPrice: price * qty, totalPoints: p.vp * qty });
-                    }
-                });
-                if(!canProceed) return;
-                items.forEach(item => { stock[item.sku] -= item.qty; });
-                const totalSum = items.reduce((s,i)=>s+i.totalPrice,0);
-                const totalPoints = items.reduce((s,i)=>s+i.totalPoints,0);
-                const yourIncome = items.reduce((s,i)=>s + getIncomeByDiscount(products.find(p=>p.sku===i.sku), discountPercent, i.qty), 0);
-                addOperation('ПРОДАЖА', `ПРОДАЖА (скидка ${discountPercent}%) - ${clientName}`, items, discountPercent, clientName);
-                showCustomModal('🧾 ЧЕК', `<div>${clientName}</div><div>Сумма: ${totalSum.toFixed(2)} ₽</div><div>Очки: ${totalPoints.toFixed(1)}</div><div>💚 Твой доход: ~${yourIncome.toFixed(2)} ₽</div>`, () => {});
-                computeStats();
-                renderProducts();
-            });
-        });
-    }
-
-    function showClubWriteOff() {
-        let html = '';
-        products.forEach(p => {
-            html += `<div class="modal-product-row"><span class="modal-product-name">${p.name} (${p.sku}) [в наличии: ${stock[p.sku]||0}]</span><input type="number" id="qty_${p.sku}" class="modal-qty-input" value="0" min="0" step="1"></div>`;
-        });
-        showCustomModal('🎪 СПИСАНИЕ ДЛЯ КЛУБА (скидка 50% - закупочная цена)', html, () => {
-            const items = [];
-            let canProceed = true;
-            products.forEach(p => {
-                const qty = parseInt(document.getElementById(`qty_${p.sku}`).value) || 0;
-                if(qty > 0) {
-                    if((stock[p.sku]||0) < qty) { alert(`Не хватает ${p.name}`); canProceed = false; return; }
-                    const price = p.svPrice;
-                    items.push({ name: p.name, qty: qty, sku: p.sku, svPrice: p.svPrice, totalPrice: price * qty, totalPoints: p.vp * qty });
-                }
-            });
-            if(!canProceed) return;
-            items.forEach(item => { stock[item.sku] -= item.qty; });
-            addOperation('КЛУБ', `СПИСАНИЕ ДЛЯ КЛУБА`, items, 50);
-            computeStats();
-            renderProducts();
-        });
-    }
-
-    function showPersonalWriteOff() {
-        let html = '';
-        products.forEach(p => {
-            html += `<div class="modal-product-row"><span class="modal-product-name">${p.name} (${p.sku}) [в наличии: ${stock[p.sku]||0}]</span><input type="number" id="qty_${p.sku}" class="modal-qty-input" value="0" min="0" step="1"></div>`;
-        });
-        showCustomModal('📦 ЛИЧНОЕ СПИСАНИЕ (списание по цене СВ)', html, () => {
-            const items = [];
-            let canProceed = true;
-            products.forEach(p => {
-                const qty = parseInt(document.getElementById(`qty_${p.sku}`).value) || 0;
-                if(qty > 0) {
-                    if((stock[p.sku]||0) < qty) { alert(`Не хватает ${p.name}`); canProceed = false; return; }
-                    items.push({ name: p.name, qty: qty, sku: p.sku, svPrice: p.svPrice, totalPrice: p.svPrice * qty, totalPoints: p.vp * qty });
-                }
-            });
-            if(!canProceed) return;
-            items.forEach(item => { stock[item.sku] -= item.qty; });
-            addOperation('ЛИЧНОЕ', `ЛИЧНОЕ СПИСАНИЕ`, items);
-            computeStats();
-            renderProducts();
-        });
-    }
-
-    function exchange() {
-        const modal = document.createElement('div');
-        modal.className = 'modal-overlay';
-        modal.innerHTML = `
-            <div class="modal-card" style="max-width:600px;">
-                <h3>🔄 ОБМЕН ТОВАРАМИ</h3>
-                <div style="margin-bottom:15px;">
-                    <label><strong>📦 Отдаю товар:</strong></label>
-                    <input type="text" id="searchOut" placeholder="🔍 Поиск по названию или SKU" style="width:100%; padding:8px; margin:5px 0; border-radius:30px; border:1px solid #DDCEFF;">
-                    <select id="productOut" size="5" style="width:100%; padding:8px; border-radius:20px; border:1px solid #DDCEFF;"></select>
-                    <input type="number" id="qtyOut" placeholder="Количество" value="1" min="1" step="1" style="width:100%; padding:8px; margin-top:5px; border-radius:30px; border:1px solid #DDCEFF;">
-                </div>
-                <div style="margin-bottom:15px;">
-                    <label><strong>📥 Получаю товар:</strong></label>
-                    <input type="text" id="searchIn" placeholder="🔍 Поиск по названию или SKU" style="width:100%; padding:8px; margin:5px 0; border-radius:30px; border:1px solid #DDCEFF;">
-                    <select id="productIn" size="5" style="width:100%; padding:8px; border-radius:20px; border:1px solid #DDCEFF;"></select>
-                    <input type="number" id="qtyIn" placeholder="Количество" value="1" min="1" step="1" style="width:100%; padding:8px; margin-top:5px; border-radius:30px; border:1px solid #DDCEFF;">
-                </div>
-                <div style="margin-bottom:15px; background:#F0E8FF; border-radius:28px; padding:12px;">
-                    <label><strong>💰 Разница по закупочным ценам (СВ):</strong></label>
-                    <div id="diffDisplay" style="font-size:1.2rem; font-weight:bold; margin:8px 0; text-align:center;">0 ₽</div>
-                    <label><strong>💸 Доплата (₽):</strong></label>
-                    <input type="number" id="extraPayment" placeholder="0" value="0" step="100" style="width:100%; padding:8px; border-radius:30px; border:1px solid #DDCEFF;">
-                    <div id="totalDisplay" style="font-size:1rem; margin-top:10px; text-align:center; background:white; border-radius:28px; padding:8px;"></div>
-                </div>
-                <div class="modal-buttons">
-                    <button class="btn btn-primary" id="exchangeConfirmBtn">✅ Обменять</button>
-                    <button class="btn" id="exchangeCancelBtn">Отмена</button>
-                </div>
-            </div>
-        `;
-        document.body.appendChild(modal);
-        setTimeout(() => modal.classList.add('active'), 10);
-        
-        function updateDiff() {
-            const outSku = modal.querySelector('#productOut').value;
-            const inSku = modal.querySelector('#productIn').value;
-            const outQty = parseInt(modal.querySelector('#qtyOut').value) || 0;
-            const inQty = parseInt(modal.querySelector('#qtyIn').value) || 0;
-            const extraPayment = parseFloat(modal.querySelector('#extraPayment').value) || 0;
-            
-            if(!outSku || !inSku || outQty <= 0 || inQty <= 0) {
-                modal.querySelector('#diffDisplay').innerHTML = '— выберите товары —';
-                modal.querySelector('#totalDisplay').innerHTML = '';
-                return;
-            }
-            
-            const outProd = products.find(p => p.sku === outSku);
-            const inProd = products.find(p => p.sku === inSku);
-            
-            const valueOut = outProd.svPrice * outQty;
-            const valueIn = inProd.svPrice * inQty;
-            const diff = valueIn - valueOut;
-            
-            modal.querySelector('#diffDisplay').innerHTML = `${diff.toFixed(2)} ₽`;
-            
-            let totalMessage = '';
-            if(diff > 0) totalMessage = `⚠️ Вы должны доплатить: ${diff.toFixed(2)} ₽`;
-            else if(diff < 0) totalMessage = `✅ Вам должны доплатить: ${Math.abs(diff).toFixed(2)} ₽`;
-            else totalMessage = `⚖️ Равноценный обмен (доплата не нужна)`;
-            
-            if(extraPayment !== 0) {
-                const finalBalance = diff + extraPayment;
-                if(finalBalance > 0) totalMessage += `<br>➕ С учётом вашей доплаты: вы отдаёте ещё ${extraPayment} ₽ → итого должны: ${finalBalance.toFixed(2)} ₽`;
-                else if(finalBalance < 0) totalMessage += `<br>➖ С учётом вашей доплаты: вам должны: ${Math.abs(finalBalance).toFixed(2)} ₽`;
-                else totalMessage += `<br>⚖️ Идеально! С учётом доплаты разница = 0`;
-            }
-            
-            modal.querySelector('#totalDisplay').innerHTML = totalMessage;
-        }
-        
-        function fillSelect(selectElement, searchValue = '') {
-            let filtered = products;
-            if(searchValue) {
-                const low = searchValue.toLowerCase();
-                filtered = products.filter(p => p.name.toLowerCase().includes(low) || p.sku.toLowerCase().includes(low));
-            }
-            selectElement.innerHTML = '';
-            filtered.forEach(p => {
-                const option = document.createElement('option');
-                option.value = p.sku;
-                option.textContent = `${p.name} (${p.sku}) — в наличии: ${stock[p.sku] || 0} шт | СВ: ${p.svPrice}₽`;
-                selectElement.appendChild(option);
-            });
-            if(filtered.length === 0) selectElement.innerHTML = '<option disabled>😕 Товары не найдены</option>';
-        }
-        
-        const selectOut = modal.querySelector('#productOut');
-        const selectIn = modal.querySelector('#productIn');
-        const searchOut = modal.querySelector('#searchOut');
-        const searchIn = modal.querySelector('#searchIn');
-        const qtyOut = modal.querySelector('#qtyOut');
-        const qtyIn = modal.querySelector('#qtyIn');
-        const extraPaymentEl = modal.querySelector('#extraPayment');
-        
-        fillSelect(selectOut);
-        fillSelect(selectIn);
-        
-        searchOut.addEventListener('input', () => fillSelect(selectOut, searchOut.value));
-        searchIn.addEventListener('input', () => fillSelect(selectIn, searchIn.value));
-        
-        selectOut.addEventListener('change', updateDiff);
-        selectIn.addEventListener('change', updateDiff);
-        qtyOut.addEventListener('input', updateDiff);
-        qtyIn.addEventListener('input', updateDiff);
-        extraPaymentEl.addEventListener('input', updateDiff);
-        
-        setTimeout(updateDiff, 100);
-        
-        modal.querySelector('#exchangeConfirmBtn').onclick = () => {
-            const outSku = selectOut.value;
-            const inSku = selectIn.value;
-            const outQty = parseInt(qtyOut.value) || 0;
-            const inQty = parseInt(qtyIn.value) || 0;
-            const extra = parseFloat(extraPaymentEl.value) || 0;
-            
-            if(!outSku || !inSku) { alert("❌ Выберите оба товара"); return; }
-            if(outQty <= 0 || inQty <= 0) { alert("❌ Количество должно быть больше 0"); return; }
-            
-            const outProd = products.find(p => p.sku === outSku);
-            const inProd = products.find(p => p.sku === inSku);
-            
-            if((stock[outSku] || 0) < outQty) { alert(`❌ Не хватает ${outProd.name} (в наличии: ${stock[outSku] || 0})`); return; }
-            
-            const valueOut = outProd.svPrice * outQty;
-            const valueIn = inProd.svPrice * inQty;
-            const diff = valueIn - valueOut;
-            const finalMessage = `Разница по СВ: ${diff.toFixed(2)} ₽. Доплата: ${extra} ₽. Итого: ${(diff + extra).toFixed(2)} ₽`;
-            
-            if(!confirm(`Подтвердить обмен?\n\nОтдаёте: ${outQty} x ${outProd.name}\nПолучаете: ${inQty} x ${inProd.name}\n\n${finalMessage}`)) return;
-            
-            stock[outSku] -= outQty;
-            stock[inSku] = (stock[inSku] || 0) + inQty;
-            
-            const items = [
-                { name: outProd.name, qty: outQty, sku: outSku, svPrice: outProd.svPrice, totalPrice: 0, totalPoints: 0, action: 'give' },
-                { name: inProd.name, qty: inQty, sku: inSku, svPrice: inProd.svPrice, totalPrice: 0, totalPoints: 0, action: 'take' }
-            ];
-            
-            addOperation('ОБМЕН', `ОБМЕН: отдал ${outQty}x ${outProd.name}, получил ${inQty}x ${inProd.name}. Доплата: ${extra}₽. ${finalMessage}`, items, null, null, extra);
-            computeStats();
-            renderProducts();
-            renderHistory();
-            modal.remove();
-        };
-        
-        modal.querySelector('#exchangeCancelBtn').onclick = () => modal.remove();
-    }
-
-    function addMainStock(sku) {
-        const prod = products.find(p=>p.sku===sku);
-        if(!prod) return;
-        stock[sku] = (stock[sku]||0) + 1;
-        addOperation('ОСНОВНОЙ СКЛАД', `ОСНОВНОЙ СКЛАД: +1 x ${prod.name}`, [{ name: prod.name, qty: 1, sku: sku, svPrice: prod.svPrice, totalPrice: 0, totalPoints: 0 }]);
-        computeStats();
-        renderProducts();
-    }
-
-    function quickSale(sku) {
-        const prod = products.find(p=>p.sku===sku);
-        if(!prod || (stock[sku]||0) < 1) { alert("Нет на складе"); return; }
-        const step1Html = `<div><label>Скидка (%):</label><select id="discountSelect"><option value="0">0% (розница)</option><option value="15">15%</option><option value="25">25%</option><option value="35">35%</option><option value="42">42%</option></select></div><div><label>Имя клиента:</label><input id="clientName" placeholder="Имя"></div>`;
-        showCustomModal(`📤 Продажа: ${prod.name}`, step1Html, () => {
-            const discountPercent = parseInt(document.getElementById('discountSelect').value);
-            const clientName = document.getElementById('clientName').value.trim() || 'Клиент';
-            const price = getPriceByDiscount(prod, discountPercent);
-            const total = price;
-            const income = getIncomeByDiscount(prod, discountPercent, 1);
-            stock[sku] -= 1;
-            addOperation('ПРОДАЖА', `ПРОДАЖА (скидка ${discountPercent}%) - ${clientName}`, [{ name: prod.name, qty: 1, sku: sku, svPrice: prod.svPrice, totalPrice: total, totalPoints: prod.vp }], discountPercent, clientName);
-            showCustomModal('🧾 ЧЕК', `<div>${clientName}</div><div>Сумма: ${total.toFixed(2)} ₽</div><div>Очки: ${prod.vp}</div><div>💚 Твой доход: ~${income.toFixed(2)} ₽</div>`, () => {});
-            computeStats();
-            renderProducts();
-        });
-    }
-
+    
     function computeStats() {
         let skuCount = 0, totalVP = 0, totalSv = 0, totalRet = 0, totalUnits = 0;
         products.forEach(p => {
@@ -865,7 +404,213 @@
         document.getElementById('statCompanyCheck').innerText = companyCheckTotal.toFixed(0)+" ₽";
         document.getElementById('statMonthlyIncome').innerText = getCurrentMonthIncome().toFixed(0)+" ₽";
     }
-
+    
+    // ======================= ОПЕРАЦИИ СО СКЛАДОМ =======================
+    function addOperation(type, title, items, discountPercent = null, clientName = null, extraPayment = null) {
+        let totalSum = 0, totalPoints = 0, totalIncome = 0, retailAdded = 0;
+        items.forEach(item => {
+            totalSum += item.totalPrice;
+            totalPoints += item.totalPoints;
+        });
+        if(type === 'ПРОДАЖА') {
+            totalIncome = totalSum * (discountPercent === 0 ? 0.5 : discountPercent === 42 ? 0.08 : discountPercent === 35 ? 0.15 : discountPercent === 25 ? 0.25 : 0.35);
+            if(discountPercent === 0) retailIncomeTotal += totalSum;
+            else companyCheckTotal += totalIncome;
+        }
+        operations.unshift({
+            id: Date.now(), date: new Date().toLocaleString(), type, title,
+            items: items.map(i => ({ name: i.name, qty: i.qty, sku: i.sku, totalPrice: i.totalPrice, totalPoints: i.totalPoints })),
+            totalSum, totalPoints, totalIncome, discountPercent, clientName, extraPayment
+        });
+        saveAll();
+        renderHistory();
+        computeStats();
+    }
+    
+    function reverseOperation(op) {
+        if(op.items) op.items.forEach(item => {
+            if(op.type === 'ПРИХОД' || op.type === 'ОСНОВНОЙ СКЛАД') stock[item.sku] -= item.qty;
+            else if(op.type === 'ПРОДАЖА') {
+                stock[item.sku] += item.qty;
+                if(op.discountPercent === 0) retailIncomeTotal -= op.totalSum;
+                else if(op.discountPercent > 0) companyCheckTotal -= op.totalIncome;
+            } else if(op.type === 'ЛИЧНОЕ' || op.type === 'КЛУБ') stock[item.sku] += item.qty;
+        });
+        saveAll();
+        computeStats();
+        renderProducts();
+    }
+    
+    function deleteOperation(opId) {
+        const index = operations.findIndex(op => op.id === opId);
+        if(index === -1) return;
+        const op = operations[index];
+        if(confirm(`Удалить операцию?\n${op.title}`)) {
+            reverseOperation(op);
+            operations.splice(index, 1);
+            saveAll();
+            computeStats();
+            renderProducts();
+            renderHistory();
+        }
+    }
+    
+    function showCustomModal(title, contentHtml, onConfirm) {
+        const modal = document.createElement('div');
+        modal.className = 'modal-overlay';
+        modal.innerHTML = `<div class="modal-card"><h3>${title}</h3>${contentHtml}<div class="modal-buttons"><button class="btn btn-primary" id="modalConfirm">✅ Подтвердить</button><button class="btn" id="modalCancel">Отмена</button></div></div>`;
+        document.body.appendChild(modal);
+        setTimeout(() => modal.classList.add('active'), 10);
+        modal.querySelector('#modalConfirm').onclick = () => { if(onConfirm) onConfirm(); modal.remove(); };
+        modal.querySelector('#modalCancel').onclick = () => modal.remove();
+    }
+    
+    // ======================= ПРИХОД =======================
+    function showMassIncome() {
+        let html = '';
+        products.forEach(p => {
+            html += `<div class="modal-product-row"><span class="modal-product-name">${p.name} (${p.sku})</span><input type="number" id="qty_${p.sku}" class="modal-qty-input" value="0" min="0" step="1"></div>`;
+        });
+        showCustomModal('➕ ПРИХОД товара', html, () => {
+            const items = [];
+            products.forEach(p => {
+                const qty = parseInt(document.getElementById(`qty_${p.sku}`).value) || 0;
+                if(qty > 0) {
+                    stock[p.sku] = (stock[p.sku]||0) + qty;
+                    items.push({ name: p.name, qty: qty, sku: p.sku, totalPrice: p.svPrice * qty, totalPoints: p.vp * qty });
+                }
+            });
+            if(items.length) addOperation('ПРИХОД', `ПРИХОД (поставка)`, items);
+            renderProducts();
+        });
+    }
+    
+    // ======================= ПРОДАЖА =======================
+    function showMassSale() {
+        let discountPercent, clientName;
+        showCustomModal('📤 ПРОДАЖА - шаг 1', 
+            `<select id="discountSelect" style="width:100%"><option value="0">0% (розница)</option><option value="15">15%</option><option value="25">25%</option><option value="35">35%</option><option value="42">42%</option></select>
+             <input id="clientName" placeholder="Имя клиента" style="width:100%; margin-top:10px; padding:10px; border-radius:30px;">`,
+            () => {
+                discountPercent = parseInt(document.getElementById('discountSelect').value);
+                clientName = document.getElementById('clientName').value.trim() || 'Клиент';
+                let html = `<div><strong>Скидка: ${discountPercent}% | Клиент: ${clientName}</strong></div>`;
+                products.forEach(p => {
+                    html += `<div class="modal-product-row"><span class="modal-product-name">${p.name} (${p.sku}) [в наличии: ${stock[p.sku]||0}]</span><input type="number" id="qty_${p.sku}" class="modal-qty-input" value="0" min="0" step="1"></div>`;
+                });
+                showCustomModal('📤 ПРОДАЖА - шаг 2', html, () => {
+                    const items = [];
+                    for(let p of products) {
+                        const qty = parseInt(document.getElementById(`qty_${p.sku}`).value) || 0;
+                        if(qty > 0) {
+                            if((stock[p.sku]||0) < qty) { alert(`Не хватает ${p.name}`); return; }
+                            const price = getPriceByDiscount(p, discountPercent);
+                            items.push({ name: p.name, qty: qty, sku: p.sku, totalPrice: price * qty, totalPoints: p.vp * qty });
+                        }
+                    }
+                    items.forEach(i => stock[i.sku] -= i.qty);
+                    addOperation('ПРОДАЖА', `ПРОДАЖА (скидка ${discountPercent}%) - ${clientName}`, items, discountPercent, clientName);
+                    renderProducts();
+                });
+            });
+    }
+    
+    // ======================= КЛУБ =======================
+    function showClubWriteOff() {
+        let html = '';
+        products.forEach(p => {
+            html += `<div class="modal-product-row"><span class="modal-product-name">${p.name} (${p.sku}) [в наличии: ${stock[p.sku]||0}]</span><input type="number" id="qty_${p.sku}" class="modal-qty-input" value="0" min="0" step="1"></div>`;
+        });
+        showCustomModal('🎪 СПИСАНИЕ ДЛЯ КЛУБА (скидка 50%)', html, () => {
+            const items = [];
+            for(let p of products) {
+                const qty = parseInt(document.getElementById(`qty_${p.sku}`).value) || 0;
+                if(qty > 0) {
+                    if((stock[p.sku]||0) < qty) { alert(`Не хватает ${p.name}`); return; }
+                    items.push({ name: p.name, qty: qty, sku: p.sku, totalPrice: p.svPrice * qty, totalPoints: p.vp * qty });
+                }
+            }
+            items.forEach(i => stock[i.sku] -= i.qty);
+            addOperation('КЛУБ', `СПИСАНИЕ ДЛЯ КЛУБА`, items);
+            renderProducts();
+        });
+    }
+    
+    // ======================= ЛИЧНОЕ СПИСАНИЕ =======================
+    function showPersonalWriteOff() {
+        let html = '';
+        products.forEach(p => {
+            html += `<div class="modal-product-row"><span class="modal-product-name">${p.name} (${p.sku}) [в наличии: ${stock[p.sku]||0}]</span><input type="number" id="qty_${p.sku}" class="modal-qty-input" value="0" min="0" step="1"></div>`;
+        });
+        showCustomModal('📦 ЛИЧНОЕ СПИСАНИЕ (по цене СВ)', html, () => {
+            const items = [];
+            for(let p of products) {
+                const qty = parseInt(document.getElementById(`qty_${p.sku}`).value) || 0;
+                if(qty > 0) {
+                    if((stock[p.sku]||0) < qty) { alert(`Не хватает ${p.name}`); return; }
+                    items.push({ name: p.name, qty: qty, sku: p.sku, totalPrice: p.svPrice * qty, totalPoints: p.vp * qty });
+                }
+            }
+            items.forEach(i => stock[i.sku] -= i.qty);
+            addOperation('ЛИЧНОЕ', `ЛИЧНОЕ СПИСАНИЕ`, items);
+            renderProducts();
+        });
+    }
+    
+    // ======================= ОБМЕН =======================
+    function exchange() {
+        let outSku, inSku, outQty, inQty, extra = 0;
+        const step1Html = `<div><label>Отдаю товар:</label><select id="outSelect" style="width:100%">${products.map(p => `<option value="${p.sku}">${p.name} (${p.sku}) — в наличии: ${stock[p.sku]||0}</option>`).join('')}</select><input id="outQty" type="number" value="1" min="1" placeholder="Кол-во" style="width:100%; margin-top:10px; padding:8px;"></div>
+                          <div style="margin-top:15px;"><label>Получаю товар:</label><select id="inSelect" style="width:100%">${products.map(p => `<option value="${p.sku}">${p.name} (${p.sku})</option>`).join('')}</select><input id="inQty" type="number" value="1" min="1" placeholder="Кол-во" style="width:100%; margin-top:10px; padding:8px;"></div>
+                          <div style="margin-top:15px;"><label>Доплата (₽):</label><input id="extra" type="number" value="0" style="width:100%; padding:8px;"></div>`;
+        showCustomModal('🔄 ОБМЕН', step1Html, () => {
+            outSku = document.getElementById('outSelect').value;
+            inSku = document.getElementById('inSelect').value;
+            outQty = parseInt(document.getElementById('outQty').value);
+            inQty = parseInt(document.getElementById('inQty').value);
+            extra = parseFloat(document.getElementById('extra').value) || 0;
+            const outProd = products.find(p => p.sku === outSku);
+            const inProd = products.find(p => p.sku === inSku);
+            if(!outProd || !inProd) return;
+            if((stock[outSku]||0) < outQty) { alert(`Не хватает ${outProd.name}`); return; }
+            const diff = (inProd.svPrice * inQty) - (outProd.svPrice * outQty);
+            if(!confirm(`Подтвердить обмен?\nОтдаёте: ${outQty}x ${outProd.name}\nПолучаете: ${inQty}x ${inProd.name}\nРазница: ${diff.toFixed(2)} ₽\nДоплата: ${extra} ₽`)) return;
+            stock[outSku] -= outQty;
+            stock[inSku] = (stock[inSku]||0) + inQty;
+            addOperation('ОБМЕН', `ОБМЕН: отдал ${outQty}x ${outProd.name}, получил ${inQty}x ${inProd.name}. Доплата: ${extra} ₽`, []);
+            renderProducts();
+        });
+    }
+    
+    // ======================= ОСНОВНОЙ СКЛАД (+1) =======================
+    function addMainStock(sku) {
+        const prod = products.find(p => p.sku === sku);
+        if(prod) {
+            stock[sku] = (stock[sku]||0) + 1;
+            addOperation('ОСНОВНОЙ СКЛАД', `ОСНОВНОЙ СКЛАД: +1 x ${prod.name}`, []);
+            renderProducts();
+        }
+    }
+    
+    // ======================= БЫСТРАЯ ПРОДАЖА =======================
+    function quickSale(sku) {
+        const prod = products.find(p => p.sku === sku);
+        if(!prod || (stock[sku]||0) < 1) { alert("Нет на складе"); return; }
+        showCustomModal(`📤 Продажа: ${prod.name}`,
+            `<select id="discountSelect"><option value="0">0% (розница)</option><option value="15">15%</option><option value="25">25%</option><option value="35">35%</option><option value="42">42%</option></select>
+             <input id="clientName" placeholder="Имя клиента" style="width:100%; margin-top:10px; padding:10px;">`,
+            () => {
+                const discount = parseInt(document.getElementById('discountSelect').value);
+                const client = document.getElementById('clientName').value.trim() || 'Клиент';
+                const price = getPriceByDiscount(prod, discount);
+                const total = price;
+                stock[sku] -= 1;
+                addOperation('ПРОДАЖА', `ПРОДАЖА (скидка ${discount}%) - ${client}`, [{ name: prod.name, qty: 1, sku: sku, totalPrice: total, totalPoints: prod.vp }], discount, client);
+                renderProducts();
+            });
+    }
+    
+    // ======================= ОТРИСОВКА =======================
     function renderProducts() {
         const search = document.getElementById('searchInput').value.toLowerCase();
         const container = document.getElementById('productList');
@@ -874,13 +619,20 @@
         let html = '';
         filtered.forEach(p => {
             const q = stock[p.sku]||0;
-            html += `<div class="product-item"><div class="product-info"><div class="product-name">${p.name} <span style="background:#DDCEFF;padding:2px 8px;border-radius:20px;font-size:0.7rem;">${p.sku}</span></div><div><span class="product-stock ${q===0?'out-of-stock':''}">📦 ${q} шт</span> ⭐ ${p.vp} VP</div><div style="font-size:0.7rem;">💰 СВ ${p.svPrice}₽ | розница ${p.retail}₽</div></div><div><button class="icon-btn" data-sku="${p.sku}" data-act="main">➕</button><button class="icon-btn" data-sku="${p.sku}" data-act="quick">📤</button></div></div>`;
+            html += `<div class="product-item">
+                <div class="product-info">
+                    <div class="product-name">${p.name} <span style="background:#DDCEFF;padding:2px 8px;border-radius:20px;font-size:0.7rem;">${p.sku}</span></div>
+                    <div><span class="product-stock ${q===0?'out-of-stock':''}">📦 ${q} шт</span> ⭐ ${p.vp} VP</div>
+                    <div style="font-size:0.7rem;">💰 СВ ${p.svPrice}₽ | розница ${p.retail}₽</div>
+                </div>
+                <div><button class="icon-btn" data-sku="${p.sku}" data-act="main">➕</button><button class="icon-btn" data-sku="${p.sku}" data-act="quick">📤</button></div>
+            </div>`;
         });
         container.innerHTML = html;
         document.querySelectorAll('[data-act="main"]').forEach(btn => btn.onclick = () => addMainStock(btn.dataset.sku));
         document.querySelectorAll('[data-act="quick"]').forEach(btn => btn.onclick = () => quickSale(btn.dataset.sku));
     }
-
+    
     function renderHistory() {
         let filtered = operations;
         if(currentFilter === "main") filtered = operations.filter(op => op.type === "ОСНОВНОЙ СКЛАД");
@@ -894,254 +646,138 @@
         let html = '';
         filtered.forEach(op => {
             let itemsHtml = '';
-            let totalSvSum = 0;
             if(op.items && op.items.length) {
                 itemsHtml = '<div style="margin-top:4px;">';
-                op.items.forEach(item => {
-                    itemsHtml += `<div style="margin-left:12px;">• ${item.name} × ${item.qty}</div>`;
-                    if(op.type === 'ПРИХОД' || op.type === 'ЛИЧНОЕ' || op.type === 'КЛУБ') {
-                        totalSvSum += item.svPrice * item.qty;
-                    }
-                });
+                op.items.forEach(item => { itemsHtml += `<div style="margin-left:12px;">• ${item.name} × ${item.qty}</div>`; });
                 itemsHtml += '</div>';
             }
-            
-            let extraHtml = '';
-            if(op.type === 'ОБМЕН' && op.extraPayment !== undefined && op.extraPayment !== null) {
-                if(op.extraPayment > 0) {
-                    extraHtml = `<div>💸 Доплата мне: ${op.extraPayment.toFixed(2)} ₽</div>`;
-                } else if(op.extraPayment < 0) {
-                    extraHtml = `<div>💸 Доплата ему: ${Math.abs(op.extraPayment).toFixed(2)} ₽</div>`;
-                }
-            }
-            
-            let incomeHtml = '';
-            if(op.type === 'ПРОДАЖА' && op.totalIncome) {
-                incomeHtml = `<div>💚 Твой доход: ~${op.totalIncome.toFixed(2)} ₽</div>`;
-            }
-            
-            let sumHtml = '';
-            if((op.type === 'ПРИХОД' || op.type === 'ЛИЧНОЕ' || op.type === 'КЛУБ') && totalSvSum > 0) {
-                sumHtml = `<div>💰 Сумма (по СВ): ${totalSvSum.toFixed(2)} ₽</div>`;
-            }
-            
-            html += `<div class="history-entry"><button class="delete-op-btn" data-id="${op.id}">🗑️</button><div class="history-type">🕒 ${op.date} — ${op.type}</div><div class="history-details"><strong>${op.title}</strong>${itemsHtml}${sumHtml}${op.totalSum ? `<div>💰 Итого: ${op.totalSum.toFixed(2)} ₽</div>` : ''}${op.totalPoints ? `<div>⭐ Очки: ${op.totalPoints.toFixed(1)}</div>` : ''}${incomeHtml}${extraHtml}</div></div>`;
+            html += `<div class="history-entry">
+                <button class="delete-op-btn" data-id="${op.id}">🗑️</button>
+                <div class="history-type">🕒 ${op.date} — ${op.type}</div>
+                <div class="history-details">
+                    <strong>${op.title}</strong>${itemsHtml}
+                    ${op.totalSum ? `<div>💰 Итого: ${op.totalSum.toFixed(2)} ₽</div>` : ''}
+                    ${op.totalPoints ? `<div>⭐ Очки: ${op.totalPoints.toFixed(1)}</div>` : ''}
+                    ${op.totalIncome ? `<div>💚 Твой доход: ~${op.totalIncome.toFixed(2)} ₽</div>` : ''}
+                </div>
+            </div>`;
         });
         container.innerHTML = html;
         document.querySelectorAll('.delete-op-btn').forEach(btn => btn.onclick = () => deleteOperation(parseInt(btn.dataset.id)));
     }
-
+    
+    // ======================= ОТЧЁТЫ ПО МЕСЯЦАМ =======================
     function showMonthlyReport() {
         const months = {};
-        
         operations.forEach(op => {
-            if (op.type === "ПРОДАЖА") {
-                let dateStr = op.date;
-                let parts = dateStr.split(',')[0].split('.');
-                if (parts.length === 3) {
-                    let day = parts[0];
-                    let month = parts[1];
-                    let year = parts[2];
-                    let date = new Date(year, month - 1, day);
-                    if (!isNaN(date.getTime())) {
-                        const key = `${year}-${month}`;
-                        if (!months[key]) {
-                            months[key] = {
-                                sum: 0,
-                                retailIncome: 0,
-                                companyIncome: 0,
-                                count: 0,
-                                orders: []
-                            };
-                        }
-                        months[key].sum += op.totalSum || 0;
-                        if (op.discountPercent === 0) {
-                            months[key].retailIncome += op.totalSum || 0;
-                        } else if (op.discountPercent > 0 && op.discountPercent !== 50) {
-                            months[key].companyIncome += op.totalIncome || 0;
-                        }
-                        months[key].count++;
-                        months[key].orders.push({
-                            date: op.date,
-                            title: op.title,
-                            sum: op.totalSum,
-                            income: op.totalIncome,
-                            items: op.items || []
-                        });
-                    }
+            if(op.type === "ПРОДАЖА") {
+                let parts = op.date.split(',')[0].split('.');
+                if(parts.length === 3) {
+                    const key = `${parts[2]}-${parts[1]}`;
+                    if(!months[key]) months[key] = { sum: 0, income: 0, count: 0, orders: [] };
+                    months[key].sum += op.totalSum || 0;
+                    months[key].income += op.totalIncome || 0;
+                    months[key].count++;
+                    months[key].orders.push({ date: op.date, title: op.title, sum: op.totalSum, income: op.totalIncome });
                 }
             }
         });
-        
-        if (Object.keys(months).length === 0) {
-            showCustomModal('📊 Отчёты по месяцам', '<div style="text-align:center; padding:20px;">📭 Нет продаж. Сделайте первую продажу через кнопку "ПРОДАЖА"</div>', () => {});
-            return;
-        }
-        
-        let monthButtonsHtml = '<div class="month-select" id="monthSelect">';
+        if(Object.keys(months).length === 0) { alert("Нет продаж"); return; }
+        let html = '<div class="month-select" id="monthSelect">';
         Object.keys(months).sort().reverse().forEach(key => {
             const [year, month] = key.split('-');
-            const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
-            const monthName = monthNames[parseInt(month) - 1];
-            monthButtonsHtml += `<button class="month-btn" data-month="${key}">${monthName} ${year}</button>`;
+            const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+            html += `<button class="month-btn" data-month="${key}">${monthNames[parseInt(month)-1]} ${year}</button>`;
         });
-        monthButtonsHtml += '</div><div id="monthReportContent"></div>';
-        
-        showCustomModal('📊 Отчёты по месяцам', monthButtonsHtml, () => {});
-        
+        html += '</div><div id="monthReportContent"></div>';
+        showCustomModal('📊 Отчёты по месяцам', html, () => {});
         setTimeout(() => {
             document.querySelectorAll('.month-btn').forEach(btn => {
                 btn.onclick = () => {
-                    document.querySelectorAll('.month-btn').forEach(b => b.classList.remove('active'));
-                    btn.classList.add('active');
-                    const key = btn.dataset.month;
-                    const data = months[key];
-                    const [year, month] = key.split('-');
-                    const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
-                    const monthName = monthNames[parseInt(month) - 1];
-                    
+                    const data = months[btn.dataset.month];
+                    const [year, month] = btn.dataset.month.split('-');
+                    const monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
                     let ordersHtml = '<div style="margin-top:12px;"><strong>📋 Заказы:</strong></div>';
                     data.orders.forEach(order => {
-                        let itemsList = '';
-                        if (order.items && order.items.length) {
-                            itemsList = '<div style="margin-left:12px; font-size:0.7rem;">';
-                            order.items.forEach(item => {
-                                itemsList += `• ${item.name} × ${item.qty}<br>`;
-                            });
-                            itemsList += '</div>';
-                        }
-                        ordersHtml += `
-                            <div style="border-top:1px solid #eee; padding:8px 0;">
-                                🕒 ${order.date}<br>
-                                ${order.title}<br>
-                                ${itemsList}
-                                💰 ${order.sum?.toFixed(2)} ₽ | 💚 ${order.income?.toFixed(2)} ₽
-                            </div>
-                        `;
+                        ordersHtml += `<div style="border-top:1px solid #eee; padding:6px 0;">${order.date}<br>${order.title}<br>💰 ${order.sum?.toFixed(2)} ₽ | 💚 ${order.income?.toFixed(2)} ₽</div>`;
                     });
-                    
                     document.getElementById('monthReportContent').innerHTML = `
                         <div style="background:#F9F5FF; border-radius:28px; padding:12px; margin-top:12px;">
-                            <div><strong>${monthName} ${year}</strong></div>
-                            <div>📦 Продаж на сумму: ${data.sum.toFixed(2)} ₽</div>
-                            <div>💸 Доход розница: ${data.retailIncome.toFixed(2)} ₽</div>
-                            <div>🧾 Чек от компании: ${data.companyIncome.toFixed(2)} ₽</div>
-                            <div>🛍️ Количество заказов: ${data.count}</div>
+                            <div><strong>${monthNames[parseInt(month)-1]} ${year}</strong></div>
+                            <div>📦 Продаж: ${data.sum.toFixed(2)} ₽</div>
+                            <div>💚 Доход: ${data.income.toFixed(2)} ₽</div>
+                            <div>🛍️ Заказов: ${data.count}</div>
                             ${ordersHtml}
                         </div>
                     `;
                 };
             });
-            const firstBtn = document.querySelector('.month-btn');
-            if (firstBtn) firstBtn.click();
         }, 100);
     }
-
-    // ======================= ВЫГРУЗКА В EXCEL (CSV) =======================
+    
+    // ======================= EXCEL ВЫГРУЗКИ =======================
     function downloadCSV(filename, rows, headers, totals = null) {
         let csv = headers.join(",") + "\n";
-        rows.forEach(row => {
-            csv += row.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",") + "\n";
-        });
-        if(totals) {
-            csv += "\n" + totals.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",") + "\n";
-        }
-        
+        rows.forEach(row => { csv += row.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",") + "\n"; });
+        if(totals) csv += "\n" + totals.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",") + "\n";
         const blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
-        const url = URL.createObjectURL(blob);
         const link = document.createElement('a');
-        link.href = url;
+        link.href = URL.createObjectURL(blob);
         link.download = filename;
-        link.style.display = 'none';
-        document.body.appendChild(link);
         link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+        URL.revokeObjectURL(link.href);
     }
     
     function exportStock() {
-        const rows = products.filter(p => (stock[p.sku]||0) > 0).map(p => [
-            p.name, p.sku, stock[p.sku], p.vp, p.svPrice, p.retail, (stock[p.sku]*p.svPrice).toFixed(2), (stock[p.sku]*p.retail).toFixed(2)
-        ]);
-        if(!rows.length) { alert("Нет товаров на складе"); return; }
-        let totalQty = 0, totalSv = 0, totalRet = 0, totalVp = 0;
+        const rows = products.filter(p => (stock[p.sku]||0) > 0).map(p => [p.name, p.sku, stock[p.sku], p.vp, p.svPrice, p.retail, (stock[p.sku]*p.svPrice).toFixed(2), (stock[p.sku]*p.retail).toFixed(2)]);
+        if(!rows.length) { alert("Нет товаров"); return; }
+        let totalQty=0, totalSv=0, totalRet=0, totalVp=0;
         rows.forEach(r => { totalQty += r[2]; totalSv += parseFloat(r[6]); totalRet += parseFloat(r[7]); totalVp += r[3] * r[2]; });
-        const totals = [`ИТОГО`, ``, totalQty, totalVp.toFixed(1), totalSv.toFixed(2), totalRet.toFixed(2), totalSv.toFixed(2), totalRet.toFixed(2)];
-        downloadCSV("остатки_склада.csv", rows, ["Товар","SKU","Кол-во","VP/шт","Цена СВ","Розница","Общая СВ","Общая розница"], totals);
+        downloadCSV("остатки_склада.csv", rows, ["Товар","SKU","Кол-во","VP/шт","Цена СВ","Розница","Общая СВ","Общая розница"], ["ИТОГО","",totalQty,totalVp.toFixed(1),"", "",totalSv.toFixed(2),totalRet.toFixed(2)]);
     }
     
     function exportIncome() {
-        const rows = operations.filter(op => op.type === "ПРИХОД").flatMap(op => {
-            if(op.items && op.items.length) {
-                return op.items.map(item => [op.date, item.name, item.qty, item.totalPoints || 0, item.svPrice, (item.svPrice * item.qty).toFixed(2)]);
-            }
-            return [[op.date, op.title, "", "", "", ""]];
-        });
+        const rows = operations.filter(op => op.type === "ПРИХОД").flatMap(op => op.items.map(item => [op.date, item.name, item.qty, item.totalPoints, getPriceByDiscount(products.find(p=>p.sku===item.sku),50), (item.totalPrice).toFixed(2)]));
         if(!rows.length) { alert("Нет приходов"); return; }
-        let totalQty = 0, totalVp = 0, totalSv = 0;
-        rows.forEach(r => { totalQty += r[2] || 0; totalVp += r[3] || 0; totalSv += parseFloat(r[5]) || 0; });
-        const totals = [`ИТОГО`, ``, totalQty, totalVp.toFixed(1), ``, totalSv.toFixed(2)];
-        downloadCSV("приходы.csv", rows, ["Дата","Товар","Кол-во","Очки VP","Цена СВ","Сумма СВ"], totals);
+        let totalQty=0, totalVp=0, totalSv=0;
+        rows.forEach(r => { totalQty += r[2]; totalVp += r[3]; totalSv += parseFloat(r[5]); });
+        downloadCSV("приходы.csv", rows, ["Дата","Товар","Кол-во","Очки VP","Цена СВ","Сумма СВ"], ["ИТОГО","",totalQty,totalVp.toFixed(1),"",totalSv.toFixed(2)]);
     }
     
     function exportSale() {
         const rows = [];
         operations.filter(op => op.type === "ПРОДАЖА").forEach(op => {
-            if(op.items && op.items.length) {
-                op.items.forEach(item => {
-                    const priceWithDiscount = getPriceByDiscount(products.find(p=>p.sku===item.sku), op.discountPercent);
-                    const income = getIncomeByDiscount(products.find(p=>p.sku===item.sku), op.discountPercent, item.qty);
-                    rows.push([op.date, op.clientName || "", op.discountPercent+"%", item.name, item.qty, item.totalPoints || 0, priceWithDiscount, item.totalPrice, income]);
-                });
-            }
+            op.items.forEach(item => {
+                const priceWithDiscount = item.totalPrice / item.qty;
+                rows.push([op.date, op.clientName, op.discountPercent+"%", item.name, item.qty, item.totalPoints, priceWithDiscount.toFixed(2), item.totalPrice.toFixed(2), op.totalIncome ? (op.totalIncome * (item.totalPrice / op.totalSum)).toFixed(2) : "0"]);
+            });
         });
         if(!rows.length) { alert("Нет продаж"); return; }
-        let totalQty = 0, totalVp = 0, totalSum = 0, totalIncome = 0;
-        rows.forEach(r => { totalQty += r[4] || 0; totalVp += r[5] || 0; totalSum += parseFloat(r[7]) || 0; totalIncome += parseFloat(r[8]) || 0; });
-        const totals = [`ИТОГО`, ``, ``, ``, totalQty, totalVp.toFixed(1), ``, totalSum.toFixed(2), totalIncome.toFixed(2)];
-        downloadCSV("продажи.csv", rows, ["Дата","Клиент","Скидка","Товар","Кол-во","Очки VP","Цена со скидкой","Сумма","Ваш доход"], totals);
+        let totalQty=0, totalVp=0, totalSum=0, totalIncome=0;
+        rows.forEach(r => { totalQty += r[4]; totalVp += r[5]; totalSum += parseFloat(r[7]); totalIncome += parseFloat(r[8]); });
+        downloadCSV("продажи.csv", rows, ["Дата","Клиент","Скидка","Товар","Кол-во","Очки VP","Цена со скидкой","Сумма","Доход"], ["ИТОГО","","","",totalQty,totalVp.toFixed(1),"",totalSum.toFixed(2),totalIncome.toFixed(2)]);
     }
     
     function exportPersonal() {
-        const rows = operations.filter(op => op.type === "ЛИЧНОЕ").flatMap(op => {
-            if(op.items && op.items.length) {
-                return op.items.map(item => [op.date, item.name, item.qty, item.totalPoints || 0, (item.svPrice * item.qty).toFixed(2)]);
-            }
-            return [[op.date, op.title, "", "", ""]];
-        });
+        const rows = operations.filter(op => op.type === "ЛИЧНОЕ").flatMap(op => op.items.map(item => [op.date, item.name, item.qty, item.totalPoints, (item.totalPrice).toFixed(2)]));
         if(!rows.length) { alert("Нет личного списания"); return; }
-        let totalQty = 0, totalVp = 0, totalSum = 0;
-        rows.forEach(r => { totalQty += r[2] || 0; totalVp += r[3] || 0; totalSum += parseFloat(r[4]) || 0; });
-        const totals = [`ИТОГО`, ``, totalQty, totalVp.toFixed(1), totalSum.toFixed(2)];
-        downloadCSV("личное_списание.csv", rows, ["Дата","Товар","Кол-во","Очки VP","Сумма (по СВ)"], totals);
+        let totalQty=0, totalVp=0, totalSum=0;
+        rows.forEach(r => { totalQty += r[2]; totalVp += r[3]; totalSum += parseFloat(r[4]); });
+        downloadCSV("личное_списание.csv", rows, ["Дата","Товар","Кол-во","Очки VP","Сумма (по СВ)"], ["ИТОГО","",totalQty,totalVp.toFixed(1),totalSum.toFixed(2)]);
     }
     
     function exportClub() {
-        const rows = operations.filter(op => op.type === "КЛУБ").flatMap(op => {
-            if(op.items && op.items.length) {
-                return op.items.map(item => [op.date, item.name, item.qty, item.totalPoints || 0, (item.svPrice * item.qty).toFixed(2)]);
-            }
-            return [[op.date, op.title, "", "", ""]];
-        });
+        const rows = operations.filter(op => op.type === "КЛУБ").flatMap(op => op.items.map(item => [op.date, item.name, item.qty, item.totalPoints, (item.totalPrice).toFixed(2)]));
         if(!rows.length) { alert("Нет списания для клуба"); return; }
-        let totalQty = 0, totalVp = 0, totalSum = 0;
-        rows.forEach(r => { totalQty += r[2] || 0; totalVp += r[3] || 0; totalSum += parseFloat(r[4]) || 0; });
-        const totals = [`ИТОГО`, ``, totalQty, totalVp.toFixed(1), totalSum.toFixed(2)];
-        downloadCSV("клуб_списание.csv", rows, ["Дата","Товар","Кол-во","Очки VP","Сумма (по СВ)"], totals);
+        let totalQty=0, totalVp=0, totalSum=0;
+        rows.forEach(r => { totalQty += r[2]; totalVp += r[3]; totalSum += parseFloat(r[4]); });
+        downloadCSV("клуб_списание.csv", rows, ["Дата","Товар","Кол-во","Очки VP","Сумма (по СВ)"], ["ИТОГО","",totalQty,totalVp.toFixed(1),totalSum.toFixed(2)]);
     }
     
     function backupSave() {
-        const data = {
-            stock: stock,
-            operations: operations,
-            retailIncomeTotal: retailIncomeTotal,
-            companyCheckTotal: companyCheckTotal,
-            device_id: localStorage.getItem("device_id"),
-            licensed: localStorage.getItem("licensed")
-        };
-        const json = JSON.stringify(data, null, 2);
-        const blob = new Blob([json], {type: "application/json"});
-        const link = document.createElement("a");
+        const data = { stock, operations, retailIncomeTotal, companyCheckTotal, device_id: localStorage.getItem("device_id"), licensed: localStorage.getItem("licensed") };
+        const blob = new Blob([JSON.stringify(data, null, 2)], {type: "application/json"});
+        const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
         link.download = `herbalife_backup_${new Date().toISOString().slice(0,19)}.json`;
         link.click();
@@ -1172,18 +808,16 @@
                     renderHistory();
                     alert("✅ Данные восстановлены!");
                     location.reload();
-                } catch(err) {
-                    alert("❌ Ошибка при восстановлении: неверный файл");
-                }
+                } catch(err) { alert("❌ Ошибка при восстановлении"); }
             };
             reader.readAsText(file);
         };
         input.click();
     }
-
+    
     function resetAll() {
-        if(confirm("❗ ОЧИСТИТЬ ВСЁ? Склад и история будут удалены без возврата.")) {
-            products.forEach(p=>stock[p.sku]=0);
+        if(confirm("❗ ОЧИСТИТЬ ВСЁ? Склад и история будут удалены.")) {
+            products.forEach(p => stock[p.sku] = 0);
             operations = [];
             retailIncomeTotal = 0;
             companyCheckTotal = 0;
@@ -1193,7 +827,8 @@
             renderHistory();
         }
     }
-
+    
+    // ======================= НАЗНАЧЕНИЕ КНОПОК =======================
     document.getElementById('incomeMassBtn')?.addEventListener('click', showMassIncome);
     document.getElementById('saleMassBtn')?.addEventListener('click', showMassSale);
     document.getElementById('clubWriteOffBtn')?.addEventListener('click', showClubWriteOff);
@@ -1205,6 +840,7 @@
     document.getElementById('exportSaleBtn')?.addEventListener('click', exportSale);
     document.getElementById('exportPersonalBtn')?.addEventListener('click', exportPersonal);
     document.getElementById('exportClubBtn')?.addEventListener('click', exportClub);
+    document.getElementById('monthlyReportBtn')?.addEventListener('click', showMonthlyReport);
     document.getElementById('backupSaveBtn')?.addEventListener('click', backupSave);
     document.getElementById('backupLoadBtn')?.addEventListener('click', backupLoad);
     document.getElementById('searchInput')?.addEventListener('input', () => renderProducts());
@@ -1217,7 +853,8 @@
             renderHistory();
         });
     });
-
+    
+    // ======================= СТАРТ =======================
     if(checkLicense()) {
         loadData();
         computeStats();
