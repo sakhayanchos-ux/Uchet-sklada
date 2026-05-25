@@ -853,178 +853,180 @@
     }
     
     function exportMonthlyReport() {
-        const months = {};
-        operations.forEach(op => {
-            let parts = op.date.split(',')[0].split('.');
-            if (parts.length === 3) {
-                let key = `${parts[2]}-${parts[1]}`;
-                if (!months[key]) months[key] = [];
-                months[key].push(op);
-            }
-        });
-        if (Object.keys(months).length === 0) {
-            alert("Нет данных ни за один месяц");
-            return;
+    const months = {};
+    operations.forEach(op => {
+        let parts = op.date.split(',')[0].split('.');
+        if (parts.length === 3) {
+            let key = `${parts[2]}-${parts[1]}`;
+            if (!months[key]) months[key] = [];
+            months[key].push(op);
         }
-        let monthList = Object.keys(months).sort().reverse();
-        let html = '<div class="month-select">';
-        monthList.forEach(key => {
-            let [y, m] = key.split('-');
-            let monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
-            html += `<button class="month-btn" data-month="${key}">${monthNames[parseInt(m) - 1]} ${y}</button>`;
-        });
-        html += '</div>';
-        showCustomModal('📊 Выберите месяц', html, () => {
-            // Небольшая задержка, чтобы DOM успел обновиться
-            setTimeout(() => {
-                document.querySelectorAll('.month-btn').forEach(btn => {
-                    btn.onclick = () => {
-                        const month = btn.dataset.month;
-                        if (!month) return;
-                        const [year, monthNum] = month.split('-');
-                        const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
-                        if (confirm(`Выгрузить отчёт за ${monthNames[parseInt(monthNum) - 1]} ${year}?`)) {
-                            const ops = months[month];
-                            let csv = '';
-                            // ПРИХОДЫ
-                            let inc = ops.filter(o => o.type === "ПРИХОД");
-                            if (inc.length) {
-                                csv += `"=== ПРИХОДЫ ===\n"`;
-                                csv += `"Дата","Товар","Кол-во","VP шт","VP общий","Цена СВ","Розница","Сумма СВ","Сумма розница"\n`;
-                                inc.forEach(o => {
-                                    o.items.forEach(i => {
-                                        csv += `"${o.date}","${i.name}","${i.qty}","${(i.totalPoints / i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${i.svPrice}","${(i.totalPrice / i.qty).toFixed(2)}","${(i.svPrice * i.qty).toFixed(2)}","${i.totalPrice.toFixed(2)}"\n`;
-                                    });
-                                });
-                                let tq = 0, tvp = 0, tsv = 0, tr = 0;
-                                inc.forEach(o => {
-                                    o.items.forEach(i => {
-                                        tq += i.qty;
-                                        tvp += i.totalPoints;
-                                        tsv += i.svPrice * i.qty;
-                                        tr += i.totalPrice;
-                                    });
-                                });
-                                csv += `"ИТОГО","","${tq}","","${tvp.toFixed(2)}","","","${tsv.toFixed(2)}","${tr.toFixed(2)}"\n\n`;
-                            }
-                            // ПРОДАЖИ
-                            let sale = ops.filter(o => o.type === "ПРОДАЖА");
-                            if (sale.length) {
-                                csv += `"=== ПРОДАЖИ ===\n"`;
-                                csv += `"Дата","Клиент","Скидка","Товар","Кол-во","VP шт","VP общий","Цена со скидкой","Сумма","Доход"\n`;
-                                sale.forEach(o => {
-                                    o.items.forEach(i => {
-                                        let income = getIncomeByDiscount(o.discountPercent, i.totalPrice);
-                                        csv += `"${o.date}","${o.clientName}","${o.discountPercent}%","${i.name}","${i.qty}","${(i.totalPoints / i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${(i.totalPrice / i.qty).toFixed(2)}","${i.totalPrice.toFixed(2)}","${income.toFixed(2)}"\n`;
-                                    });
-                                });
-                                let tq = 0, tvp = 0, ts = 0, ti = 0;
-                                sale.forEach(o => {
-                                    o.items.forEach(i => {
-                                        tq += i.qty;
-                                        tvp += i.totalPoints;
-                                        ts += i.totalPrice;
-                                        ti += getIncomeByDiscount(o.discountPercent, i.totalPrice);
-                                    });
-                                });
-                                csv += `"ИТОГО","","","",${tq},"",${tvp.toFixed(2)},"",${ts.toFixed(2)},${ti.toFixed(2)}\n\n`;
-                            }
-                            // ЛИЧНОЕ
-                            let pers = ops.filter(o => o.type === "ЛИЧНОЕ");
-                            if (pers.length) {
-                                csv += `"=== ЛИЧНОЕ ===\n"`;
-                                csv += `"Дата","Товар","Кол-во","VP шт","VP общий","Сумма (по СВ)"\n`;
-                                pers.forEach(o => {
-                                    o.items.forEach(i => {
-                                        csv += `"${o.date}","${i.name}","${i.qty}","${(i.totalPoints / i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${(i.svPrice * i.qty).toFixed(2)}"\n`;
-                                    });
-                                });
-                                let tq = 0, tvp = 0, ts = 0;
-                                pers.forEach(o => {
-                                    o.items.forEach(i => {
-                                        tq += i.qty;
-                                        tvp += i.totalPoints;
-                                        ts += i.svPrice * i.qty;
-                                    });
-                                });
-                                csv += `"ИТОГО","","${tq}","",${tvp.toFixed(2)},"${ts.toFixed(2)}"\n\n`;
-                            }
-                            // КЛУБ
-                            let club = ops.filter(o => o.type === "КЛУБ");
-                            if (club.length) {
-                                csv += `"=== КЛУБ ===\n"`;
-                                csv += `"Дата","Товар","Кол-во","VP шт","VP общий","Сумма (по СВ)"\n`;
-                                club.forEach(o => {
-                                    o.items.forEach(i => {
-                                        csv += `"${o.date}","${i.name}","${i.qty}","${(i.totalPoints / i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${(i.svPrice * i.qty).toFixed(2)}"\n`;
-                                    });
-                                });
-                                let tq = 0, tvp = 0, ts = 0;
-                                club.forEach(o => {
-                                    o.items.forEach(i => {
-                                        tq += i.qty;
-                                        tvp += i.totalPoints;
-                                        ts += i.svPrice * i.qty;
-                                    });
-                                });
-                                csv += `"ИТОГО","","${tq}","",${tvp.toFixed(2)},"${ts.toFixed(2)}"\n\n`;
-                            }
-                            // ОБМЕН
-                            let exch = ops.filter(o => o.type === "ОБМЕН");
-                            if (exch.length) {
-                                csv += `"=== ОБМЕН ===\n"`;
-                                csv += `"Тип","Дата","Товар","Кол-во","VP шт","VP общий","Сумма (по СВ)"\n`;
-                                let giveQ = 0, giveVp = 0, giveSv = 0, takeQ = 0, takeVp = 0, takeSv = 0;
-                                exch.forEach(o => {
-                                    o.items.forEach(i => {
-                                        let t = i.action === 'give' ? 'ОТДАЛ' : 'ПОЛУЧИЛ';
-                                        csv += `"${t}","${o.date}","${i.name}","${i.qty}","${(i.totalPoints / i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${(i.svPrice * i.qty).toFixed(2)}"\n`;
-                                        if (i.action === 'give') {
-                                            giveQ += i.qty;
-                                            giveVp += i.totalPoints;
-                                            giveSv += i.svPrice * i.qty;
-                                        } else {
-                                            takeQ += i.qty;
-                                            takeVp += i.totalPoints;
-                                            takeSv += i.svPrice * i.qty;
-                                        }
-                                    });
-                                });
-                                csv += `"ИТОГО ОТДАЛ","","","${giveQ}","",${giveVp.toFixed(2)},"${giveSv.toFixed(2)}"\n`;
-                                csv += `"ИТОГО ПОЛУЧИЛ","","","${takeQ}","",${takeVp.toFixed(2)},"${takeSv.toFixed(2)}"\n`;
-                                csv += `"РАЗНИЦА","","","${takeQ - giveQ}","",${(takeVp - giveVp).toFixed(2)},"${(takeSv - giveSv).toFixed(2)}"\n\n`;
-                            }
-                            // ОСТАТКИ
-                            csv += `"=== ОСТАТКИ (текущие) ===\n"`;
-                            csv += `"Товар","SKU","Кол-во","VP шт","VP общий","Цена СВ","Розница","Общая СВ","Общая розница"\n`;
-                            let tq = 0, tvp = 0, tsv = 0, tr = 0;
-                            products.forEach(p => {
-                                let q = stock[p.sku] || 0;
-                                if (q > 0) {
-                                    tq += q;
-                                    tvp += p.vp * q;
-                                    tsv += p.svPrice * q;
-                                    tr += p.retail * q;
-                                    csv += `"${p.name}","${p.sku}","${q}","${p.vp}","${(p.vp * q).toFixed(2)}","${p.svPrice}","${p.retail}","${(p.svPrice * q).toFixed(2)}","${(p.retail * q).toFixed(2)}"\n`;
-                                }
-                            });
-                            csv += `"ИТОГО","","${tq}","",${tvp.toFixed(2)},"","",${tsv.toFixed(2)},${tr.toFixed(2)}\n`;
-                            const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
-                            const link = document.createElement('a');
-                            link.href = URL.createObjectURL(blob);
-                            link.download = `отчёт_${month}.csv`;
-                            link.click();
-                            URL.revokeObjectURL(link.href);
-                            alert(`✅ Отчёт за ${month} выгружен`);
-                            // Закрываем модальное окно
-                            const modalOverlay = document.querySelector('.modal-overlay');
-                            if (modalOverlay) modalOverlay.remove();
-                        }
-                    };
-                });
-            }, 50);
-        });
+    });
+    if (Object.keys(months).length === 0) {
+        alert("Нет данных ни за один месяц");
+        return;
     }
+    let monthList = Object.keys(months).sort().reverse();
+    let html = '<div class="month-select">';
+    monthList.forEach(key => {
+        let [y, m] = key.split('-');
+        let monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+        html += `<button class="month-btn" data-month="${key}">${monthNames[parseInt(m) - 1]} ${y}</button>`;
+    });
+    html += '</div>';
+    // Создаём модальное окно вручную, чтобы сразу навесить события
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `<div class="modal-card"><h3>📊 Выберите месяц</h3>${html}<div class="modal-buttons"><button class="btn" id="monthCancelBtn">Отмена</button></div></div>`;
+    document.body.appendChild(modal);
+    setTimeout(() => modal.classList.add('active'), 10);
+    
+    const btns = modal.querySelectorAll('.month-btn');
+    btns.forEach(btn => {
+        btn.onclick = () => {
+            const month = btn.dataset.month;
+            if (!month) return;
+            const [year, monthNum] = month.split('-');
+            const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+            if (confirm(`Выгрузить отчёт за ${monthNames[parseInt(monthNum) - 1]} ${year}?`)) {
+                const ops = months[month];
+                let csv = '';
+                // ПРИХОДЫ
+                let inc = ops.filter(o => o.type === "ПРИХОД");
+                if (inc.length) {
+                    csv += `"=== ПРИХОДЫ ===\n"`;
+                    csv += `"Дата","Товар","Кол-во","VP шт","VP общий","Цена СВ","Розница","Сумма СВ","Сумма розница"\n`;
+                    inc.forEach(o => {
+                        o.items.forEach(i => {
+                            csv += `"${o.date}","${i.name}","${i.qty}","${(i.totalPoints / i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${i.svPrice}","${(i.totalPrice / i.qty).toFixed(2)}","${(i.svPrice * i.qty).toFixed(2)}","${i.totalPrice.toFixed(2)}"\n`;
+                        });
+                    });
+                    let tq = 0, tvp = 0, tsv = 0, tr = 0;
+                    inc.forEach(o => {
+                        o.items.forEach(i => {
+                            tq += i.qty;
+                            tvp += i.totalPoints;
+                            tsv += i.svPrice * i.qty;
+                            tr += i.totalPrice;
+                        });
+                    });
+                    csv += `"ИТОГО","","${tq}","","${tvp.toFixed(2)}","","","${tsv.toFixed(2)}","${tr.toFixed(2)}"\n\n`;
+                }
+                // ПРОДАЖИ
+                let sale = ops.filter(o => o.type === "ПРОДАЖА");
+                if (sale.length) {
+                    csv += `"=== ПРОДАЖИ ===\n"`;
+                    csv += `"Дата","Клиент","Скидка","Товар","Кол-во","VP шт","VP общий","Цена со скидкой","Сумма","Доход"\n`;
+                    sale.forEach(o => {
+                        o.items.forEach(i => {
+                            let income = getIncomeByDiscount(o.discountPercent, i.totalPrice);
+                            csv += `"${o.date}","${o.clientName}","${o.discountPercent}%","${i.name}","${i.qty}","${(i.totalPoints / i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${(i.totalPrice / i.qty).toFixed(2)}","${i.totalPrice.toFixed(2)}","${income.toFixed(2)}"\n`;
+                        });
+                    });
+                    let tq = 0, tvp = 0, ts = 0, ti = 0;
+                    sale.forEach(o => {
+                        o.items.forEach(i => {
+                            tq += i.qty;
+                            tvp += i.totalPoints;
+                            ts += i.totalPrice;
+                            ti += getIncomeByDiscount(o.discountPercent, i.totalPrice);
+                        });
+                    });
+                    csv += `"ИТОГО","","","",${tq},"",${tvp.toFixed(2)},"",${ts.toFixed(2)},${ti.toFixed(2)}\n\n`;
+                }
+                // ЛИЧНОЕ
+                let pers = ops.filter(o => o.type === "ЛИЧНОЕ");
+                if (pers.length) {
+                    csv += `"=== ЛИЧНОЕ ===\n"`;
+                    csv += `"Дата","Товар","Кол-во","VP шт","VP общий","Сумма (по СВ)"\n`;
+                    pers.forEach(o => {
+                        o.items.forEach(i => {
+                            csv += `"${o.date}","${i.name}","${i.qty}","${(i.totalPoints / i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${(i.svPrice * i.qty).toFixed(2)}"\n`;
+                        });
+                    });
+                    let tq = 0, tvp = 0, ts = 0;
+                    pers.forEach(o => {
+                        o.items.forEach(i => {
+                            tq += i.qty;
+                            tvp += i.totalPoints;
+                            ts += i.svPrice * i.qty;
+                        });
+                    });
+                    csv += `"ИТОГО","","${tq}","",${tvp.toFixed(2)},"${ts.toFixed(2)}"\n\n`;
+                }
+                // КЛУБ
+                let club = ops.filter(o => o.type === "КЛУБ");
+                if (club.length) {
+                    csv += `"=== КЛУБ ===\n"`;
+                    csv += `"Дата","Товар","Кол-во","VP шт","VP общий","Сумма (по СВ)"\n`;
+                    club.forEach(o => {
+                        o.items.forEach(i => {
+                            csv += `"${o.date}","${i.name}","${i.qty}","${(i.totalPoints / i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${(i.svPrice * i.qty).toFixed(2)}"\n`;
+                        });
+                    });
+                    let tq = 0, tvp = 0, ts = 0;
+                    club.forEach(o => {
+                        o.items.forEach(i => {
+                            tq += i.qty;
+                            tvp += i.totalPoints;
+                            ts += i.svPrice * i.qty;
+                        });
+                    });
+                    csv += `"ИТОГО","","${tq}","",${tvp.toFixed(2)},"${ts.toFixed(2)}"\n\n`;
+                }
+                // ОБМЕН
+                let exch = ops.filter(o => o.type === "ОБМЕН");
+                if (exch.length) {
+                    csv += `"=== ОБМЕН ===\n"`;
+                    csv += `"Тип","Дата","Товар","Кол-во","VP шт","VP общий","Сумма (по СВ)"\n`;
+                    let giveQ = 0, giveVp = 0, giveSv = 0, takeQ = 0, takeVp = 0, takeSv = 0;
+                    exch.forEach(o => {
+                        o.items.forEach(i => {
+                            let t = i.action === 'give' ? 'ОТДАЛ' : 'ПОЛУЧИЛ';
+                            csv += `"${t}","${o.date}","${i.name}","${i.qty}","${(i.totalPoints / i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${(i.svPrice * i.qty).toFixed(2)}"\n`;
+                            if (i.action === 'give') {
+                                giveQ += i.qty;
+                                giveVp += i.totalPoints;
+                                giveSv += i.svPrice * i.qty;
+                            } else {
+                                takeQ += i.qty;
+                                takeVp += i.totalPoints;
+                                takeSv += i.svPrice * i.qty;
+                            }
+                        });
+                    });
+                    csv += `"ИТОГО ОТДАЛ","","","${giveQ}","",${giveVp.toFixed(2)},"${giveSv.toFixed(2)}"\n`;
+                    csv += `"ИТОГО ПОЛУЧИЛ","","","${takeQ}","",${takeVp.toFixed(2)},"${takeSv.toFixed(2)}"\n`;
+                    csv += `"РАЗНИЦА","","","${takeQ - giveQ}","",${(takeVp - giveVp).toFixed(2)},"${(takeSv - giveSv).toFixed(2)}"\n\n`;
+                }
+                // ОСТАТКИ
+                csv += `"=== ОСТАТКИ (текущие) ===\n"`;
+                csv += `"Товар","SKU","Кол-во","VP шт","VP общий","Цена СВ","Розница","Общая СВ","Общая розница"\n`;
+                let tq = 0, tvp = 0, tsv = 0, tr = 0;
+                products.forEach(p => {
+                    let q = stock[p.sku] || 0;
+                    if (q > 0) {
+                        tq += q;
+                        tvp += p.vp * q;
+                        tsv += p.svPrice * q;
+                        tr += p.retail * q;
+                        csv += `"${p.name}","${p.sku}","${q}","${p.vp}","${(p.vp * q).toFixed(2)}","${p.svPrice}","${p.retail}","${(p.svPrice * q).toFixed(2)}","${(p.retail * q).toFixed(2)}"\n`;
+                    }
+                });
+                csv += `"ИТОГО","","${tq}","",${tvp.toFixed(2)},"","",${tsv.toFixed(2)},${tr.toFixed(2)}\n`;
+                const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `отчёт_${month}.csv`;
+                link.click();
+                URL.revokeObjectURL(link.href);
+                alert(`✅ Отчёт за ${month} выгружен`);
+                modal.remove();
+            }
+        };
+    });
+    modal.querySelector('#monthCancelBtn').onclick = () => modal.remove();
+}
     
     function backupSave() {
         const data = { stock, operations, retailIncomeTotal, companyCheckTotal, device_id: localStorage.getItem("device_id"), licensed: localStorage.getItem("licensed"), user_pin: localStorage.getItem("user_pin") };
