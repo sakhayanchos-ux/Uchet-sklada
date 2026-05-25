@@ -39,6 +39,7 @@
         .btn-personal { background: #D6E8FF; color: #2E5A7C; }
         .btn-club { background: #C8E6E0; color: #2E5A4C; }
         .btn-exchange { background: #FFF0D6; color: #A5672C; }
+        .btn-debt { background: #FFD966; color: #5C3A00; }
         .btn-danger { background: #FFE0E5; color: #BB3B5C; }
         .btn-excel { background: #D9E6DB; color: #2C5A2E; }
         .btn-report { background: #E6D9FF; color: #5B3A7C; }
@@ -58,6 +59,7 @@
         .history-type { font-weight: 800; font-size: 0.7rem; color: #7B5F9E; }
         .history-details { font-size: 0.7rem; margin-top: 6px; line-height: 1.4; }
         .delete-op-btn { position: absolute; top: 8px; right: 8px; background: none; border: none; font-size: 1rem; cursor: pointer; color: #BB3B5C; padding: 4px 8px; border-radius: 20px; }
+        .pay-debt-btn { margin-left: 8px; background: #4CAF50; color: white; border: none; border-radius: 20px; padding: 4px 12px; font-size: 0.7rem; cursor: pointer; }
         .bottom-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 12px; }
         .backup-buttons { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 8px; }
         footer { font-size: 0.65rem; text-align: center; margin-top: 16px; color: #8E76AD; }
@@ -121,6 +123,7 @@
         <div class="action-buttons">
             <button class="btn btn-primary" id="incomeMassBtn">➕ ПРИХОД</button>
             <button class="btn btn-sale" id="saleMassBtn">📤 ПРОДАЖА</button>
+            <button class="btn btn-debt" id="debtMassBtn">📝 В ДОЛГ</button>
             <button class="btn btn-club" id="clubWriteOffBtn">🎪 КЛУБ</button>
             <button class="btn btn-personal" id="personalWriteOffBtn">📦 ЛИЧНОЕ</button>
             <button class="btn btn-exchange" id="exchangeBtn">🔄 ЗАМЕНА</button>
@@ -134,6 +137,7 @@
             <button class="filter-btn" data-filter="main">🏠 Основной</button>
             <button class="filter-btn" data-filter="income">⬆️ Приход</button>
             <button class="filter-btn" data-filter="sale">📤 Продажи</button>
+            <button class="filter-btn" data-filter="debt">💸 Долги</button>
             <button class="filter-btn" data-filter="club">🎪 Клуб</button>
             <button class="filter-btn" data-filter="personal">🎁 Личное</button>
             <button class="filter-btn" data-filter="exchange">🔄 Обмен</button>
@@ -149,6 +153,7 @@
             <button class="btn btn-excel" id="exportPersonalBtn">📊 Excel: Личное</button>
             <button class="btn btn-excel" id="exportClubBtn">📊 Excel: Клуб</button>
             <button class="btn btn-excel" id="exportExchangeBtn">📊 Excel: Обмен</button>
+            <button class="btn btn-excel" id="exportDebtBtn">📊 Excel: Долги</button>
             <button class="btn btn-report" id="monthlyReportBtn">📊 Отчёты по месяцам</button>
         </div>
         <div class="backup-buttons">
@@ -160,7 +165,7 @@
 </div>
 
 <script>
-    // ======================= ПРАЙС-ЛИСТ (66 товаров) =======================
+    // ======================= ПРАЙС-ЛИСТ (66 товаров - ТОЧНЫЕ СУММЫ) =======================
     const products = [
         { name: "Коктейль Формула 1 - Куриный крем-суп", sku: "395К", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, price15: 2941.79, retail: 3819 },
         { name: "Коктейль Формула 1 - Ваниль", sku: "500К", vp: 23.95, svPrice: 1909.30, price42: 2145.30, price35: 2351.79, price25: 2646.79, price15: 2941.79, retail: 3819 },
@@ -391,7 +396,7 @@
         document.getElementById('statTotalIncome').innerText = (retailIncomeTotal + companyCheckTotal).toFixed(2)+" ₽";
     }
     
-    function addOperation(type, title, items, discountPercent = null, clientName = null, extraPayment = null) {
+    function addOperation(type, title, items, discountPercent = null, clientName = null, extraPayment = null, isDebt = false, debtRemaining = null) {
         let totalSum = 0, totalPoints = 0, totalIncome = 0;
         items.forEach(item => {
             totalSum += item.totalPrice;
@@ -405,7 +410,10 @@
         operations.unshift({
             id: Date.now(), date: new Date().toLocaleString(), type, title,
             items: items.map(i => ({ name: i.name, qty: i.qty, sku: i.sku, totalPrice: i.totalPrice, totalPoints: i.totalPoints, svPrice: i.svPrice, action: i.action })),
-            totalSum, totalPoints, totalIncome, discountPercent, clientName, extraPayment
+            totalSum, totalPoints, totalIncome, discountPercent, clientName, extraPayment,
+            isDebt: isDebt || false,
+            debtRemaining: debtRemaining !== undefined ? debtRemaining : (isDebt ? totalSum : null),
+            debtPaid: isDebt ? 0 : null
         });
         saveAll();
         renderHistory();
@@ -424,6 +432,10 @@
             else if(op.type === 'ОБМЕН') {
                 if(item.action === 'give') stock[item.sku] += item.qty;
                 else if(item.action === 'take') stock[item.sku] -= item.qty;
+            }
+            else if(op.type === 'ДОЛГ') {
+                stock[item.sku] += item.qty;
+                // Если был частично оплачен, возвращаем доход?
             }
         });
         saveAll();
@@ -493,6 +505,62 @@
                 addOperation('ПРОДАЖА', `ПРОДАЖА (скидка ${discountPercent}%) - ${clientName}`, items, discountPercent, clientName);
                 renderProducts();
             });
+        });
+    }
+    
+    function showMassDebt() {
+        let discountPercent, clientName;
+        showCustomModal('📝 В ДОЛГ - шаг 1', `<select id="discountSelect" style="width:100%"><option value="0">0% (розница)</option><option value="15">15%</option><option value="25">25%</option><option value="35">35%</option><option value="42">42%</option></select><input id="clientName" placeholder="Имя должника" style="width:100%; margin-top:10px; padding:10px;">`, () => {
+            discountPercent = parseInt(document.getElementById('discountSelect').value);
+            clientName = document.getElementById('clientName').value.trim() || 'Должник';
+            let html = `<div><strong>Скидка: ${discountPercent}% | Должник: ${clientName}</strong></div>`;
+            products.forEach(p => { html += `<div class="modal-product-row"><span class="modal-product-name">${p.name} (${p.sku}) [в наличии: ${stock[p.sku]||0}]</span><input type="number" id="qty_${p.sku}" class="modal-qty-input" value="0" min="0" step="1"></div>`; });
+            showCustomModal('📝 В ДОЛГ - шаг 2', html, () => {
+                const items = [];
+                for(let p of products) {
+                    const qty = parseInt(document.getElementById(`qty_${p.sku}`).value) || 0;
+                    if(qty > 0) {
+                        if((stock[p.sku]||0) < qty) { alert(`Не хватает ${p.name}`); return; }
+                        const price = getPriceByDiscount(p, discountPercent);
+                        items.push({ name: p.name, qty: qty, sku: p.sku, totalPrice: price * qty, totalPoints: p.vp * qty, svPrice: p.svPrice });
+                    }
+                }
+                items.forEach(i => stock[i.sku] -= i.qty);
+                addOperation('ДОЛГ', `ДОЛГ (скидка ${discountPercent}%) - ${clientName}`, items, discountPercent, clientName, null, true);
+                renderProducts();
+            });
+        });
+    }
+    
+    function payDebt(opId) {
+        const op = operations.find(o => o.id === opId);
+        if(!op || op.type !== 'ДОЛГ') return;
+        let remaining = op.debtRemaining || op.totalSum;
+        showCustomModal(`💰 Оплата долга - ${op.clientName}`, `
+            <div>Остаток долга: ${remaining.toFixed(2)} ₽</div>
+            <div>Сумма оплаты: <input type="number" id="paymentAmount" value="${remaining.toFixed(2)}" step="100" style="width:100%; margin-top:10px; padding:8px;"></div>
+            <div style="margin-top:10px;"><label>Оплачено полностью?</label> <input type="checkbox" id="payFull" checked></div>
+        `, () => {
+            let payment = parseFloat(document.getElementById('paymentAmount').value);
+            if(isNaN(payment) || payment <= 0) { alert("Введите сумму"); return; }
+            let newRemaining = remaining - payment;
+            if(newRemaining < 0) newRemaining = 0;
+            // Зачисляем доход
+            const income = payment * (op.discountPercent === 0 ? 0.5 : op.discountPercent === 42 ? 0.08 : op.discountPercent === 35 ? 0.15 : op.discountPercent === 25 ? 0.25 : 0.35);
+            if(op.discountPercent === 0) retailIncomeTotal += income;
+            else companyCheckTotal += income;
+            // Обновляем операцию
+            op.debtRemaining = newRemaining;
+            op.debtPaid = (op.debtPaid || 0) + payment;
+            if(newRemaining <= 0) {
+                op.type = 'ПРОДАЖА';
+                op.title = op.title.replace('ДОЛГ', 'ПРОДАЖА');
+                op.isDebt = false;
+            }
+            saveAll();
+            computeStats();
+            renderHistory();
+            alert(`✅ Оплачено ${payment.toFixed(2)} ₽. ${newRemaining > 0 ? 'Остаток: ' + newRemaining.toFixed(2) + ' ₽' : 'Долг полностью погашен!'}`);
         });
     }
     
@@ -614,6 +682,7 @@
         if(currentFilter === "main") filtered = operations.filter(op => op.type === "ОСНОВНОЙ СКЛАД");
         else if(currentFilter === "income") filtered = operations.filter(op => op.type === "ПРИХОД");
         else if(currentFilter === "sale") filtered = operations.filter(op => op.type === "ПРОДАЖА");
+        else if(currentFilter === "debt") filtered = operations.filter(op => op.type === "ДОЛГ" && op.debtRemaining > 0);
         else if(currentFilter === "club") filtered = operations.filter(op => op.type === "КЛУБ");
         else if(currentFilter === "personal") filtered = operations.filter(op => op.type === "ЛИЧНОЕ");
         else if(currentFilter === "exchange") filtered = operations.filter(op => op.type === "ОБМЕН");
@@ -629,8 +698,13 @@
                 itemsHtml += '</div>';
             }
             let extraHtml = '';
+            let debtHtml = '';
             if(op.type === 'ОБМЕН' && op.extraPayment !== undefined) {
                 extraHtml = `<div>💸 ${op.extraPayment > 0 ? 'Доплата ему: ' + op.extraPayment.toFixed(2) + ' ₽' : 'Доплата мне: ' + Math.abs(op.extraPayment).toFixed(2) + ' ₽'}</div>`;
+            }
+            if(op.type === 'ДОЛГ' && op.debtRemaining > 0) {
+                debtHtml = `<div>💰 Остаток долга: ${op.debtRemaining.toFixed(2)} ₽</div>
+                            <button class="pay-debt-btn" data-id="${op.id}">✅ Оплатить</button>`;
             }
             let vpHtml = '';
             if(op.type === 'ОБМЕН') {
@@ -645,146 +719,34 @@
             }
             let sumHtml = (op.type === 'ПРИХОД' || op.type === 'ЛИЧНОЕ' || op.type === 'КЛУБ') && totalSv > 0 ? `<div>💰 Сумма (по СВ): ${totalSv.toFixed(2)} ₽</div>` : '';
             let incomeHtml = op.type === 'ПРОДАЖА' && op.totalIncome ? `<div>💚 Доход: ${op.totalIncome.toFixed(2)} ₽</div>` : '';
-            html += `<div class="history-entry"><button class="delete-op-btn" data-id="${op.id}">🗑️</button><div class="history-type">🕒 ${op.date} — ${op.type}</div><div class="history-details"><strong>${op.title}</strong>${itemsHtml}${sumHtml}${vpHtml}${op.totalSum ? `<div>💰 Итого: ${op.totalSum.toFixed(2)} ₽</div>` : ''}${incomeHtml}${extraHtml}</div></div>`;
+            html += `<div class="history-entry"><button class="delete-op-btn" data-id="${op.id}">🗑️</button><div class="history-type">🕒 ${op.date} — ${op.type}</div><div class="history-details"><strong>${op.title}</strong>${itemsHtml}${sumHtml}${vpHtml}${op.totalSum ? `<div>💰 Итого: ${op.totalSum.toFixed(2)} ₽</div>` : ''}${incomeHtml}${extraHtml}${debtHtml}</div></div>`;
         });
         container.innerHTML = html;
         document.querySelectorAll('.delete-op-btn').forEach(btn => btn.onclick = () => deleteOperation(parseInt(btn.dataset.id)));
+        document.querySelectorAll('.pay-debt-btn').forEach(btn => btn.onclick = () => payDebt(parseInt(btn.dataset.id)));
     }
     
-    // ======================= ИСПРАВЛЕННЫЕ ФУНКЦИИ =======================
-    function exportExchange() {
-        let rows = [];
-        operations.filter(op => op.type === "ОБМЕН").forEach(op => {
-            op.items.forEach(item => {
-                rows.push([
-                    op.date,
-                    item.action === 'give' ? 'ОТДАЛ' : 'ПОЛУЧИЛ',
-                    item.name,
-                    item.qty,
-                    (item.totalPoints/item.qty).toFixed(2),
-                    item.totalPoints.toFixed(2),
-                    item.svPrice,
-                    (item.svPrice * item.qty).toFixed(2)
-                ]);
-            });
-        });
-        if(!rows.length) { alert("Нет обменов"); return; }
-        let totalGiveQty = 0, totalGiveVp = 0, totalGiveSv = 0, totalTakeQty = 0, totalTakeVp = 0, totalTakeSv = 0;
-        rows.forEach(r => {
-            if(r[1] === 'ОТДАЛ') { totalGiveQty += r[3]; totalGiveVp += parseFloat(r[5]); totalGiveSv += parseFloat(r[7]); }
-            else { totalTakeQty += r[3]; totalTakeVp += parseFloat(r[5]); totalTakeSv += parseFloat(r[7]); }
-        });
-        rows.push(["=== ИТОГО ===", "", "", "", "", "", "", ""]);
-        rows.push(["ОТДАЛ", "", "", totalGiveQty, "", totalGiveVp.toFixed(2), "", totalGiveSv.toFixed(2)]);
-        rows.push(["ПОЛУЧИЛ", "", "", totalTakeQty, "", totalTakeVp.toFixed(2), "", totalTakeSv.toFixed(2)]);
-        rows.push(["РАЗНИЦА", "", "", totalTakeQty - totalGiveQty, "", (totalTakeVp - totalGiveVp).toFixed(2), "", (totalTakeSv - totalGiveSv).toFixed(2)]);
-        let csv = "Дата,Тип,Товар,Кол-во,VP шт,VP общий,Цена СВ,Сумма СВ\n";
-        rows.forEach(r => { csv += r.map(x => `"${String(x).replace(/"/g, '""')}"`).join(",") + "\n"; });
+    // ======================= EXCEL ВЫГРУЗКИ =======================
+    function downloadCSV(filename, rows, headers, totals = null) {
+        let csv = headers.join(",") + "\n";
+        rows.forEach(row => { csv += row.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",") + "\n"; });
+        if(totals) csv += "\n" + totals.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",") + "\n";
         const blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
-        link.download = "обмены.csv";
+        link.download = filename;
         link.click();
         URL.revokeObjectURL(link.href);
     }
     
-    function exportMonthlyReport() {
-        const months = {};
-        operations.forEach(op => {
-            let parts = op.date.split(',')[0].split('.');
-            if(parts.length === 3) {
-                let key = `${parts[2]}-${parts[1]}`;
-                if(!months[key]) months[key] = [];
-                months[key].push(op);
-            }
-        });
-        if(Object.keys(months).length === 0) { alert("Нет данных"); return; }
-        let html = '<div class="month-select">';
-        Object.keys(months).sort().reverse().forEach(key => {
-            let [y,m] = key.split('-');
-            let monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
-            html += `<button class="month-btn" data-month="${key}">${monthNames[parseInt(m)-1]} ${y}</button>`;
-        });
-        html += '</div>';
-        showCustomModal('📊 Отчёты по месяцам', html, () => {
-            setTimeout(() => {
-                document.querySelectorAll('.month-btn').forEach(btn => {
-                    btn.onclick = () => {
-                        let month = btn.dataset.month;
-                        let ops = months[month];
-                        let csv = '';
-                        // ПРИХОДЫ
-                        let inc = ops.filter(o => o.type === "ПРИХОД");
-                        if(inc.length) {
-                            csv += `"=== ПРИХОДЫ ===\n"`;
-                            csv += `"Дата","Товар","Кол-во","VP шт","VP общий","Цена СВ","Розница","Сумма СВ","Сумма розница"\n`;
-                            inc.forEach(o => { o.items.forEach(i => { csv += `"${o.date}","${i.name}","${i.qty}","${(i.totalPoints/i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${i.svPrice}","${(i.totalPrice/i.qty).toFixed(2)}","${(i.svPrice*i.qty).toFixed(2)}","${i.totalPrice.toFixed(2)}"\n`; }); });
-                            let tq=0, tvp=0, tsv=0, tr=0;
-                            inc.forEach(o => { o.items.forEach(i => { tq += i.qty; tvp += i.totalPoints; tsv += i.svPrice * i.qty; tr += i.totalPrice; }); });
-                            csv += `"ИТОГО","","${tq}","","${tvp.toFixed(2)}","","","${tsv.toFixed(2)}","${tr.toFixed(2)}"\n\n`;
-                        }
-                        // ПРОДАЖИ
-                        let sale = ops.filter(o => o.type === "ПРОДАЖА");
-                        if(sale.length) {
-                            csv += `"=== ПРОДАЖИ ===\n"`;
-                            csv += `"Дата","Клиент","Скидка","Товар","Кол-во","VP шт","VP общий","Цена со скидкой","Сумма","Доход"\n`;
-                            sale.forEach(o => { o.items.forEach(i => { let income = getIncomeByDiscount(o.discountPercent, i.totalPrice); csv += `"${o.date}","${o.clientName}","${o.discountPercent}%","${i.name}","${i.qty}","${(i.totalPoints/i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${(i.totalPrice/i.qty).toFixed(2)}","${i.totalPrice.toFixed(2)}","${income.toFixed(2)}"\n`; }); });
-                            let tq=0, tvp=0, ts=0, ti=0;
-                            sale.forEach(o => { o.items.forEach(i => { tq += i.qty; tvp += i.totalPoints; ts += i.totalPrice; ti += getIncomeByDiscount(o.discountPercent, i.totalPrice); }); });
-                            csv += `"ИТОГО","","","",${tq},"",${tvp.toFixed(2)},"",${ts.toFixed(2)},${ti.toFixed(2)}\n\n`;
-                        }
-                        // ЛИЧНОЕ
-                        let pers = ops.filter(o => o.type === "ЛИЧНОЕ");
-                        if(pers.length) {
-                            csv += `"=== ЛИЧНОЕ ===\n"`;
-                            csv += `"Дата","Товар","Кол-во","VP шт","VP общий","Сумма (по СВ)"\n`;
-                            pers.forEach(o => { o.items.forEach(i => { csv += `"${o.date}","${i.name}","${i.qty}","${(i.totalPoints/i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${(i.svPrice*i.qty).toFixed(2)}"\n`; }); });
-                            let tq=0, tvp=0, ts=0;
-                            pers.forEach(o => { o.items.forEach(i => { tq += i.qty; tvp += i.totalPoints; ts += i.svPrice * i.qty; }); });
-                            csv += `"ИТОГО","","${tq}","",${tvp.toFixed(2)},"${ts.toFixed(2)}"\n\n`;
-                        }
-                        // КЛУБ
-                        let club = ops.filter(o => o.type === "КЛУБ");
-                        if(club.length) {
-                            csv += `"=== КЛУБ ===\n"`;
-                            csv += `"Дата","Товар","Кол-во","VP шт","VP общий","Сумма (по СВ)"\n`;
-                            club.forEach(o => { o.items.forEach(i => { csv += `"${o.date}","${i.name}","${i.qty}","${(i.totalPoints/i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${(i.svPrice*i.qty).toFixed(2)}"\n`; }); });
-                            let tq=0, tvp=0, ts=0;
-                            club.forEach(o => { o.items.forEach(i => { tq += i.qty; tvp += i.totalPoints; ts += i.svPrice * i.qty; }); });
-                            csv += `"ИТОГО","","${tq}","",${tvp.toFixed(2)},"${ts.toFixed(2)}"\n\n`;
-                        }
-                        // ОБМЕН
-                        let exch = ops.filter(o => o.type === "ОБМЕН");
-                        if(exch.length) {
-                            csv += `"=== ОБМЕН ===\n"`;
-                            csv += `"Тип","Дата","Товар","Кол-во","VP шт","VP общий","Сумма (по СВ)"\n`;
-                            let giveQ=0, giveVp=0, giveSv=0, takeQ=0, takeVp=0, takeSv=0;
-                            exch.forEach(o => { o.items.forEach(i => { let t = i.action === 'give' ? 'ОТДАЛ' : 'ПОЛУЧИЛ'; csv += `"${t}","${o.date}","${i.name}","${i.qty}","${(i.totalPoints/i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${(i.svPrice*i.qty).toFixed(2)}"\n`; if(i.action === 'give') { giveQ += i.qty; giveVp += i.totalPoints; giveSv += i.svPrice*i.qty; } else { takeQ += i.qty; takeVp += i.totalPoints; takeSv += i.svPrice*i.qty; } }); });
-                            csv += `"ИТОГО ОТДАЛ","","","${giveQ}","",${giveVp.toFixed(2)},"${giveSv.toFixed(2)}"\n`;
-                            csv += `"ИТОГО ПОЛУЧИЛ","","","${takeQ}","",${takeVp.toFixed(2)},"${takeSv.toFixed(2)}"\n`;
-                            csv += `"РАЗНИЦА","","","${takeQ-giveQ}","",${(takeVp-giveVp).toFixed(2)},"${(takeSv-giveSv).toFixed(2)}"\n\n`;
-                        }
-                        // ОСТАТКИ
-                        csv += `"=== ОСТАТКИ (текущие) ===\n"`;
-                        csv += `"Товар","SKU","Кол-во","VP шт","VP общий","Цена СВ","Розница","Общая СВ","Общая розница"\n`;
-                        let tq=0, tvp=0, tsv=0, tr=0;
-                        products.forEach(p => { let q = stock[p.sku]||0; if(q > 0) { tq += q; tvp += p.vp * q; tsv += p.svPrice * q; tr += p.retail * q; csv += `"${p.name}","${p.sku}","${q}","${p.vp}","${(p.vp*q).toFixed(2)}","${p.svPrice}","${p.retail}","${(p.svPrice*q).toFixed(2)}","${(p.retail*q).toFixed(2)}"\n`; } });
-                        csv += `"ИТОГО","","${tq}","",${tvp.toFixed(2)},"","",${tsv.toFixed(2)},${tr.toFixed(2)}\n`;
-                        const blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
-                        const link = document.createElement('a');
-                        link.href = URL.createObjectURL(blob);
-                        link.download = `отчёт_${month}.csv`;
-                        link.click();
-                        URL.revokeObjectURL(link.href);
-                        alert(`✅ Отчёт за ${month} выгружен`);
-                        document.querySelector('.modal-overlay')?.remove();
-                    };
-                });
-            }, 20);
-        });
+    function exportDebt() {
+        const rows = operations.filter(op => op.type === "ДОЛГ" && op.debtRemaining > 0).flatMap(op => op.items.map(item => [op.date, op.clientName, op.discountPercent+"%", item.name, item.qty, (item.totalPoints/item.qty).toFixed(2), item.totalPoints.toFixed(2), (item.totalPrice/item.qty).toFixed(2), item.totalPrice.toFixed(2), op.debtRemaining.toFixed(2)]));
+        if(!rows.length) { alert("Нет активных долгов"); return; }
+        let totalQty=0, totalVp=0, totalSum=0, totalDebt=0;
+        rows.forEach(r => { totalQty += r[4]; totalVp += parseFloat(r[6]); totalSum += parseFloat(r[8]); totalDebt += parseFloat(r[9]); });
+        downloadCSV("долги.csv", rows, ["Дата","Клиент","Скидка","Товар","Кол-во","VP шт","VP общий","Цена со скидкой","Сумма","Остаток долга"], ["ИТОГО","","","",totalQty,"",totalVp.toFixed(2),"",totalSum.toFixed(2),totalDebt.toFixed(2)]);
     }
     
-    // ======================= ОСТАЛЬНЫЕ EXCEL =======================
     function exportStock() {
         const rows = products.filter(p => (stock[p.sku]||0) > 0).map(p => [p.name, p.sku, stock[p.sku], p.vp, (p.vp*stock[p.sku]).toFixed(2), p.svPrice, p.retail, (stock[p.sku]*p.svPrice).toFixed(2), (stock[p.sku]*p.retail).toFixed(2)]);
         if(!rows.length) { alert("Нет товаров"); return; }
@@ -857,16 +819,114 @@
         downloadCSV("клуб_списание.csv", rows, ["Дата","Товар","Кол-во","VP шт","VP общий","Сумма (по СВ)"], ["ИТОГО","",totalQty,"",totalVp.toFixed(2),totalSum.toFixed(2)]);
     }
     
-    function downloadCSV(filename, rows, headers, totals = null) {
-        let csv = headers.join(",") + "\n";
-        rows.forEach(row => { csv += row.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",") + "\n"; });
-        if(totals) csv += "\n" + totals.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",") + "\n";
-        const blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
-        const link = document.createElement('a');
-        link.href = URL.createObjectURL(blob);
-        link.download = filename;
-        link.click();
-        URL.revokeObjectURL(link.href);
+    function exportExchange() {
+        let rows = [];
+        operations.filter(op => op.type === "ОБМЕН").forEach(op => {
+            op.items.forEach(item => {
+                rows.push([op.date, item.action === 'give' ? 'ОТДАЛ' : 'ПОЛУЧИЛ', item.name, item.qty, (item.totalPoints/item.qty).toFixed(2), item.totalPoints.toFixed(2), item.svPrice, (item.svPrice*item.qty).toFixed(2)]);
+            });
+        });
+        if(!rows.length) { alert("Нет обменов"); return; }
+        let totalGiveQty=0, totalGiveVp=0, totalGiveSv=0, totalTakeQty=0, totalTakeVp=0, totalTakeSv=0;
+        rows.forEach(r => {
+            if(r[1] === 'ОТДАЛ') { totalGiveQty += r[3]; totalGiveVp += parseFloat(r[5]); totalGiveSv += parseFloat(r[7]); }
+            else { totalTakeQty += r[3]; totalTakeVp += parseFloat(r[5]); totalTakeSv += parseFloat(r[7]); }
+        });
+        rows.push(["=== ИТОГО ===", "", "", "", "", "", "", ""]);
+        rows.push(["ОТДАЛ", "", "", totalGiveQty, "", totalGiveVp.toFixed(2), "", totalGiveSv.toFixed(2)]);
+        rows.push(["ПОЛУЧИЛ", "", "", totalTakeQty, "", totalTakeVp.toFixed(2), "", totalTakeSv.toFixed(2)]);
+        rows.push(["РАЗНИЦА", "", "", totalTakeQty - totalGiveQty, "", (totalTakeVp - totalGiveVp).toFixed(2), "", (totalTakeSv - totalGiveSv).toFixed(2)]);
+        downloadCSV("обмены.csv", rows, ["Дата","Тип","Товар","Кол-во","VP шт","VP общий","Цена СВ","Сумма СВ"]);
+    }
+    
+    function exportMonthlyReport() {
+        const months = {};
+        operations.forEach(op => {
+            let parts = op.date.split(',')[0].split('.');
+            if(parts.length === 3) {
+                let key = `${parts[2]}-${parts[1]}`;
+                if(!months[key]) months[key] = [];
+                months[key].push(op);
+            }
+        });
+        if(Object.keys(months).length === 0) { alert("Нет данных"); return; }
+        let html = '<div class="month-select">';
+        Object.keys(months).sort().reverse().forEach(key => {
+            let [y,m] = key.split('-');
+            let monthNames = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+            html += `<button class="month-btn" data-month="${key}">${monthNames[parseInt(m)-1]} ${y}</button>`;
+        });
+        html += '</div>';
+        showCustomModal('📊 Отчёты по месяцам', html, () => {
+            setTimeout(() => {
+                document.querySelectorAll('.month-btn').forEach(btn => {
+                    btn.onclick = () => {
+                        let month = btn.dataset.month;
+                        let ops = months[month];
+                        let csv = '';
+                        let inc = ops.filter(o => o.type === "ПРИХОД");
+                        if(inc.length) {
+                            csv += `"=== ПРИХОДЫ ===\n"`;
+                            csv += `"Дата","Товар","Кол-во","VP шт","VP общий","Цена СВ","Розница","Сумма СВ","Сумма розница"\n`;
+                            inc.forEach(o => { o.items.forEach(i => { csv += `"${o.date}","${i.name}","${i.qty}","${(i.totalPoints/i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${i.svPrice}","${(i.totalPrice/i.qty).toFixed(2)}","${(i.svPrice*i.qty).toFixed(2)}","${i.totalPrice.toFixed(2)}"\n`; }); });
+                            let tq=0, tvp=0, tsv=0, tr=0;
+                            inc.forEach(o => { o.items.forEach(i => { tq += i.qty; tvp += i.totalPoints; tsv += i.svPrice * i.qty; tr += i.totalPrice; }); });
+                            csv += `"ИТОГО","","${tq}","","${tvp.toFixed(2)}","","","${tsv.toFixed(2)}","${tr.toFixed(2)}"\n\n`;
+                        }
+                        let sale = ops.filter(o => o.type === "ПРОДАЖА");
+                        if(sale.length) {
+                            csv += `"=== ПРОДАЖИ ===\n"`;
+                            csv += `"Дата","Клиент","Скидка","Товар","Кол-во","VP шт","VP общий","Цена со скидкой","Сумма","Доход"\n`;
+                            sale.forEach(o => { o.items.forEach(i => { let income = getIncomeByDiscount(o.discountPercent, i.totalPrice); csv += `"${o.date}","${o.clientName}","${o.discountPercent}%","${i.name}","${i.qty}","${(i.totalPoints/i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${(i.totalPrice/i.qty).toFixed(2)}","${i.totalPrice.toFixed(2)}","${income.toFixed(2)}"\n`; }); });
+                            let tq=0, tvp=0, ts=0, ti=0;
+                            sale.forEach(o => { o.items.forEach(i => { tq += i.qty; tvp += i.totalPoints; ts += i.totalPrice; ti += getIncomeByDiscount(o.discountPercent, i.totalPrice); }); });
+                            csv += `"ИТОГО","","","",${tq},"",${tvp.toFixed(2)},"",${ts.toFixed(2)},${ti.toFixed(2)}\n\n`;
+                        }
+                        let pers = ops.filter(o => o.type === "ЛИЧНОЕ");
+                        if(pers.length) {
+                            csv += `"=== ЛИЧНОЕ ===\n"`;
+                            csv += `"Дата","Товар","Кол-во","VP шт","VP общий","Сумма (по СВ)"\n`;
+                            pers.forEach(o => { o.items.forEach(i => { csv += `"${o.date}","${i.name}","${i.qty}","${(i.totalPoints/i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${(i.svPrice*i.qty).toFixed(2)}"\n`; }); });
+                            let tq=0, tvp=0, ts=0;
+                            pers.forEach(o => { o.items.forEach(i => { tq += i.qty; tvp += i.totalPoints; ts += i.svPrice * i.qty; }); });
+                            csv += `"ИТОГО","","${tq}","",${tvp.toFixed(2)},"${ts.toFixed(2)}"\n\n`;
+                        }
+                        let club = ops.filter(o => o.type === "КЛУБ");
+                        if(club.length) {
+                            csv += `"=== КЛУБ ===\n"`;
+                            csv += `"Дата","Товар","Кол-во","VP шт","VP общий","Сумма (по СВ)"\n`;
+                            club.forEach(o => { o.items.forEach(i => { csv += `"${o.date}","${i.name}","${i.qty}","${(i.totalPoints/i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${(i.svPrice*i.qty).toFixed(2)}"\n`; }); });
+                            let tq=0, tvp=0, ts=0;
+                            club.forEach(o => { o.items.forEach(i => { tq += i.qty; tvp += i.totalPoints; ts += i.svPrice * i.qty; }); });
+                            csv += `"ИТОГО","","${tq}","",${tvp.toFixed(2)},"${ts.toFixed(2)}"\n\n`;
+                        }
+                        let exch = ops.filter(o => o.type === "ОБМЕН");
+                        if(exch.length) {
+                            csv += `"=== ОБМЕН ===\n"`;
+                            csv += `"Тип","Дата","Товар","Кол-во","VP шт","VP общий","Сумма (по СВ)"\n`;
+                            let giveQ=0, giveVp=0, giveSv=0, takeQ=0, takeVp=0, takeSv=0;
+                            exch.forEach(o => { o.items.forEach(i => { let t = i.action === 'give' ? 'ОТДАЛ' : 'ПОЛУЧИЛ'; csv += `"${t}","${o.date}","${i.name}","${i.qty}","${(i.totalPoints/i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${(i.svPrice*i.qty).toFixed(2)}"\n`; if(i.action === 'give') { giveQ += i.qty; giveVp += i.totalPoints; giveSv += i.svPrice*i.qty; } else { takeQ += i.qty; takeVp += i.totalPoints; takeSv += i.svPrice*i.qty; } }); });
+                            csv += `"ИТОГО ОТДАЛ","","","${giveQ}","",${giveVp.toFixed(2)},"${giveSv.toFixed(2)}"\n`;
+                            csv += `"ИТОГО ПОЛУЧИЛ","","","${takeQ}","",${takeVp.toFixed(2)},"${takeSv.toFixed(2)}"\n`;
+                            csv += `"РАЗНИЦА","","","${takeQ-giveQ}","",${(takeVp-giveVp).toFixed(2)},"${(takeSv-giveSv).toFixed(2)}"\n\n`;
+                        }
+                        csv += `"=== ОСТАТКИ (текущие) ===\n"`;
+                        csv += `"Товар","SKU","Кол-во","VP шт","VP общий","Цена СВ","Розница","Общая СВ","Общая розница"\n`;
+                        let tq=0, tvp=0, tsv=0, tr=0;
+                        products.forEach(p => { let q = stock[p.sku]||0; if(q > 0) { tq += q; tvp += p.vp * q; tsv += p.svPrice * q; tr += p.retail * q; csv += `"${p.name}","${p.sku}","${q}","${p.vp}","${(p.vp*q).toFixed(2)}","${p.svPrice}","${p.retail}","${(p.svPrice*q).toFixed(2)}","${(p.retail*q).toFixed(2)}"\n`; } });
+                        csv += `"ИТОГО","","${tq}","",${tvp.toFixed(2)},"","",${tsv.toFixed(2)},${tr.toFixed(2)}\n`;
+                        const blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
+                        const link = document.createElement('a');
+                        link.href = URL.createObjectURL(blob);
+                        link.download = `отчёт_${month}.csv`;
+                        link.click();
+                        URL.revokeObjectURL(link.href);
+                        alert(`✅ Отчёт за ${month} выгружен`);
+                        document.querySelector('.modal-overlay')?.remove();
+                    };
+                });
+            }, 20);
+        });
     }
     
     function backupSave() {
@@ -927,6 +987,7 @@
     // ======================= НАЗНАЧЕНИЕ КНОПОК =======================
     document.getElementById('incomeMassBtn')?.addEventListener('click', showMassIncome);
     document.getElementById('saleMassBtn')?.addEventListener('click', showMassSale);
+    document.getElementById('debtMassBtn')?.addEventListener('click', showMassDebt);
     document.getElementById('clubWriteOffBtn')?.addEventListener('click', showClubWriteOff);
     document.getElementById('personalWriteOffBtn')?.addEventListener('click', showPersonalWriteOff);
     document.getElementById('exchangeBtn')?.addEventListener('click', exchange);
@@ -937,6 +998,7 @@
     document.getElementById('exportPersonalBtn')?.addEventListener('click', exportPersonal);
     document.getElementById('exportClubBtn')?.addEventListener('click', exportClub);
     document.getElementById('exportExchangeBtn')?.addEventListener('click', exportExchange);
+    document.getElementById('exportDebtBtn')?.addEventListener('click', exportDebt);
     document.getElementById('monthlyReportBtn')?.addEventListener('click', exportMonthlyReport);
     document.getElementById('backupSaveBtn')?.addEventListener('click', backupSave);
     document.getElementById('backupLoadBtn')?.addEventListener('click', backupLoad);
