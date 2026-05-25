@@ -416,27 +416,45 @@
     }
     
     function reverseOperation(op) {
-        if(op.items) op.items.forEach(item => {
-            if(op.type === 'ПРИХОД' || op.type === 'ОСНОВНОЙ СКЛАД') stock[item.sku] -= item.qty;
-            else if(op.type === 'ПРОДАЖА') {
-                stock[item.sku] += item.qty;
-                if(op.discountPercent === 0) retailIncomeTotal -= op.totalIncome;
-                else if(op.discountPercent > 0) companyCheckTotal -= op.totalIncome;
+    if (op.items && op.items.length) {
+        op.items.forEach(item => {
+            // ПРИХОД / ОСНОВНОЙ СКЛАД — вычитаем товары
+            if (op.type === 'ПРИХОД' || op.type === 'ОСНОВНОЙ СКЛАД') {
+                stock[item.sku] = (stock[item.sku] || 0) - item.qty;
             }
-            else if(op.type === 'ЛИЧНОЕ' || op.type === 'КЛУБ') stock[item.sku] += item.qty;
-            else if(op.type === 'ОБМЕН') {
-                if(item.action === 'give') stock[item.sku] += item.qty;
-                else if(item.action === 'take') stock[item.sku] -= item.qty;
+            // ПРОДАЖА — возвращаем товары и откатываем доход
+            else if (op.type === 'ПРОДАЖА') {
+                stock[item.sku] = (stock[item.sku] || 0) + item.qty;
+                // Откатываем доход ровно на ту сумму, которая была добавлена
+                if (op.discountPercent === 0) {
+                    // розница: доход = сумма × 0.5
+                    retailIncomeTotal -= op.totalSum * 0.5;
+                } else if (op.discountPercent > 0) {
+                    // скидка: доход = сумма × процент (8/15/25/35%)
+                    let percent = op.discountPercent === 42 ? 0.08 : 
+                                  op.discountPercent === 35 ? 0.15 : 
+                                  op.discountPercent === 25 ? 0.25 : 0.35;
+                    companyCheckTotal -= op.totalSum * percent;
+                }
             }
-            else if(op.type === 'ДОЛГ') {
-                stock[item.sku] += item.qty;
-                // Если был частично оплачен, возвращаем доход?
+            // ЛИЧНОЕ / КЛУБ — возвращаем товары (дохода не было)
+            else if (op.type === 'ЛИЧНОЕ' || op.type === 'КЛУБ') {
+                stock[item.sku] = (stock[item.sku] || 0) + item.qty;
+            }
+            // ОБМЕН — возвращаем отданное, забираем полученное
+            else if (op.type === 'ОБМЕН') {
+                if (item.action === 'give') {
+                    stock[item.sku] = (stock[item.sku] || 0) + item.qty;
+                } else if (item.action === 'take') {
+                    stock[item.sku] = (stock[item.sku] || 0) - item.qty;
+                }
             }
         });
-        saveAll();
-        computeStats();
-        renderProducts();
     }
+    saveAll();
+    computeStats();
+    renderProducts();
+}
     
     function deleteOperation(opId) {
         const idx = operations.findIndex(op => op.id === opId);
