@@ -1,14 +1,59 @@
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=yes">
-    <title>Склад Herbalife 🌿</title>
-    <link rel="icon" type="image/png" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACAAAAAgCAYAAABzenr0AAABnUlEQVRYR+2UMUhCURCGv9lQAjSABtQAJUgJUgApSEpRAUpAFSi9AApRAjSAk60DxZL7f1zt3dpX97Zk5/r9P2vWvU7pOpwXQIRoGsJ3wHvH4Hka/5H6Rp4nwPxDXg/HsR04h+sI5AcWUKEd1xPPlzxOc9bsoNw1A+QJ9yWvIQkM6gxNwGzAdjmQ4+BvCM3JhEtMg595KMuQhinbDQIHw133GHQhVe6pddDeDt6Q4w0r3mfw6b9UpdyiFVvHraKFvATDsGw6CwLgZ1SZgzsdOYTi6ubvpi3tRTRHxu5JCOw2QwTkm2iXo5kKl77E71ZC+IqALA9IC2N7KOyEqBM9POVgKrQCuh4V0gUlr3aEvwZOuTIM4+r1+P4VPVhIjf6ASYJPXu3R4PQUSBdPmhG6DoZwrDcYx7rYnfwNLyHYodaoT9EwAAAABJRU5ErkJggg==">
-    <meta name="theme-color" content="#B29CD6">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <meta name="apple-mobile-web-app-title" content="Herbalife склад">
+    <script>
+    (function() {
+        const canvas = document.createElement('canvas');
+        canvas.width = 180;
+        canvas.height = 180;
+        const ctx = canvas.getContext('2d');
+        
+        // Лавандовый фон
+        ctx.fillStyle = '#B29CD6';
+        ctx.beginPath();
+        ctx.roundRect(0, 0, 180, 180, 32);
+        ctx.fill();
+        
+        // Белая коробка 📦
+        ctx.font = '100px "Segoe UI Emoji", "Apple Color Emoji", "Noto Color Emoji", sans-serif';
+        ctx.fillStyle = 'white';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('📦', 90, 95);
+        
+        if (!CanvasRenderingContext2D.prototype.roundRect) {
+            CanvasRenderingContext2D.prototype.roundRect = function(x, y, w, h, r) {
+                if (w < 2 * r) r = w / 2;
+                if (h < 2 * r) r = h / 2;
+                this.moveTo(x+r, y);
+                this.lineTo(x+w-r, y);
+                this.quadraticCurveTo(x+w, y, x+w, y+r);
+                this.lineTo(x+w, y+h-r);
+                this.quadraticCurveTo(x+w, y+h, x+w-r, y+h);
+                this.lineTo(x+r, y+h);
+                this.quadraticCurveTo(x, y+h, x, y+h-r);
+                this.lineTo(x, y+r);
+                this.quadraticCurveTo(x, y, x+r, y);
+                return this;
+            };
+        }
+        
+        const iconUrl = canvas.toDataURL('image/png');
+        
+        // Устанавливаем favicon (для вкладки браузера)
+        const favicon = document.createElement('link');
+        favicon.rel = 'icon';
+        favicon.type = 'image/png';
+        favicon.href = iconUrl;
+        document.head.appendChild(favicon);
+        
+        // Устанавливаем apple-touch-icon (для главного экрана iPhone)
+        const appleIcon = document.createElement('link');
+        appleIcon.rel = 'apple-touch-icon';
+        appleIcon.href = iconUrl;
+        document.head.appendChild(appleIcon);
+    })();
+</script>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; }
         body {
