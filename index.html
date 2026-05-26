@@ -160,6 +160,8 @@
             <button class="btn btn-excel" id="exportClubBtn">📊 Excel: Клуб</button>
             <button class="btn btn-excel" id="exportExchangeBtn">📊 Excel: Обмен</button>
             <button class="btn btn-excel" id="exportDebtBtn">📊 Excel: Долги</button>
+            <button class="btn btn-excel" id="exportServiceBtn">📊 Excel: Абонементы</button>
+            <button class="btn btn-excel" id="exportOnetimeBtn">📊 Excel: Разовые продажи</button>
             <button class="btn btn-excel" id="monthlyReportBtn">📊 Excel: Отчёты по месяцам</button>
         </div>
         <div class="backup-buttons">
@@ -427,8 +429,7 @@
     }
     
     function addServiceOperation(type, title, clientName, amount) {
-        // Услуги (абонемент, разовая продажа) - только доход в розницу
-        const totalIncome = amount; // Полный доход (услуга без скидки)
+        const totalIncome = amount;
         retailIncomeTotal += totalIncome;
         operations.unshift({
             id: Date.now(),
@@ -476,7 +477,6 @@
                 }
             });
         }
-        // Откат дохода для услуг (абонемент, разовая продажа)
         if (op.type === 'АБОНЕМЕНТ' || op.type === 'РАЗОВАЯ ПРОДАЖА') {
             retailIncomeTotal -= op.totalIncome;
         }
@@ -799,6 +799,24 @@
         URL.revokeObjectURL(link.href);
     }
     
+    function exportService() {
+        const rows = operations.filter(op => op.type === "АБОНЕМЕНТ").map(op => [op.date, op.clientName || "Клиент", op.totalSum.toFixed(2), op.totalIncome.toFixed(2)]);
+        if(!rows.length) { alert("Нет абонементов"); return; }
+        let totalSum = 0, totalIncome = 0;
+        rows.forEach(r => { totalSum += parseFloat(r[2]); totalIncome += parseFloat(r[3]); });
+        rows.push(["ИТОГО","",totalSum.toFixed(2),totalIncome.toFixed(2)]);
+        downloadCSV("абонементы.csv", rows, ["Дата","Клиент","Сумма","Доход"]);
+    }
+    
+    function exportOnetime() {
+        const rows = operations.filter(op => op.type === "РАЗОВАЯ ПРОДАЖА").map(op => [op.date, op.clientName || "Клиент", op.totalSum.toFixed(2), op.totalIncome.toFixed(2)]);
+        if(!rows.length) { alert("Нет разовых продаж"); return; }
+        let totalSum = 0, totalIncome = 0;
+        rows.forEach(r => { totalSum += parseFloat(r[2]); totalIncome += parseFloat(r[3]); });
+        rows.push(["ИТОГО","",totalSum.toFixed(2),totalIncome.toFixed(2)]);
+        downloadCSV("разовые_продажи.csv", rows, ["Дата","Клиент","Сумма","Доход"]);
+    }
+    
     function exportDebt() {
         const rows = operations.filter(op => op.type === "ДОЛГ" && op.debtRemaining > 0).flatMap(op => op.items.map(item => [op.date, op.clientName, op.discountPercent+"%", item.name, item.qty, (item.totalPoints/item.qty).toFixed(2), item.totalPoints.toFixed(2), (item.totalPrice/item.qty).toFixed(2), item.totalPrice.toFixed(2), op.debtRemaining.toFixed(2)]));
         if(!rows.length) { alert("Нет активных долгов"); return; }
@@ -824,11 +842,8 @@
     }
     
     function exportSale() {
-        // Обычные товарные продажи
         let retailRows = [], discountRows = [];
-        // Услуги (абонементы и разовые продажи)
-        let serviceRows = [];
-        let onetimeRows = [];
+        let serviceRows = [], onetimeRows = [];
         
         operations.filter(op => op.type === "ПРОДАЖА").forEach(op => {
             op.items.forEach(item => {
@@ -1209,6 +1224,8 @@
     document.getElementById('exportClubBtn')?.addEventListener('click', exportClub);
     document.getElementById('exportExchangeBtn')?.addEventListener('click', exportExchange);
     document.getElementById('exportDebtBtn')?.addEventListener('click', exportDebt);
+    document.getElementById('exportServiceBtn')?.addEventListener('click', exportService);
+    document.getElementById('exportOnetimeBtn')?.addEventListener('click', exportOnetime);
     document.getElementById('monthlyReportBtn')?.addEventListener('click', exportMonthlyReport);
     document.getElementById('backupSaveBtn')?.addEventListener('click', backupSave);
     document.getElementById('backupLoadBtn')?.addEventListener('click', backupLoad);
