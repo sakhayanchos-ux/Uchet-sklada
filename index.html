@@ -907,7 +907,7 @@
         downloadCSV("обмены.csv", rows, ["Дата","Тип","Товар","Кол-во","VP шт","VP общий","Цена СВ","Сумма СВ"]);
     }
     
-       // ======================= НОВЫЙ МЕСЯЧНЫЙ ОТЧЁТ (ТОЛЬКО ИТОГИ - ТАБЛИЦА) =======================
+         // ======================= МЕСЯЧНЫЙ ОТЧЁТ (только итоги, .xls) =======================
     function exportMonthlySummary() {
         const months = {};
         operations.forEach(op => {
@@ -946,21 +946,24 @@
                     const ops = months[month];
                     
                     // ========== ДОХОДЫ ==========
-                    let incomeFromSales = 0;      // продажи товаров (розница + чек от компании)
-                    let incomeFromServices = 0;    // абонементы
-                    let incomeFromOnetime = 0;     // разовые продажи
+                    let incomeFromSales = 0;
+                    let incomeFromServices = 0;
+                    let incomeFromOnetime = 0;
+                    let pointsFromSales = 0;
                     
-                    // Продажи товаров (уже с учётом дохода от розницы и чека компании)
                     ops.filter(o => o.type === "ПРОДАЖА").forEach(o => {
                         incomeFromSales += o.totalIncome || 0;
+                        if (o.items) {
+                            o.items.forEach(item => {
+                                pointsFromSales += item.totalPoints || 0;
+                            });
+                        }
                     });
                     
-                    // Абонементы
                     ops.filter(o => o.type === "АБОНЕМЕНТ").forEach(o => {
                         incomeFromServices += o.totalIncome || 0;
                     });
                     
-                    // Разовые продажи
                     ops.filter(o => o.type === "РАЗОВАЯ ПРОДАЖА").forEach(o => {
                         incomeFromOnetime += o.totalIncome || 0;
                     });
@@ -968,61 +971,48 @@
                     let totalIncome = incomeFromSales + incomeFromServices + incomeFromOnetime;
                     
                     // ========== РАСХОДЫ ==========
-                    let expensePersonal = 0;   // личное списание (по СВ)
-                    let expenseClub = 0;        // клуб (по СВ)
-                    let expenseDebtGiven = 0;   // сумма выданных долгов (товары по цене со скидкой)
+                    let expensePersonal = 0;
+                    let pointsPersonal = 0;
                     
-                    // Личное списание
                     ops.filter(o => o.type === "ЛИЧНОЕ").forEach(o => {
                         o.items.forEach(item => {
                             expensePersonal += item.svPrice * item.qty;
+                            pointsPersonal += item.totalPoints || 0;
                         });
                     });
                     
-                    // Клуб
-                    ops.filter(o => o.type === "КЛУБ").forEach(o => {
-                        o.items.forEach(item => {
-                            expenseClub += item.svPrice * item.qty;
-                        });
-                    });
-                    
-                    // Выданные долги (сумма товаров по цене со скидкой)
-                    ops.filter(o => o.type === "ДОЛГ").forEach(o => {
-                        expenseDebtGiven += o.totalSum || 0;
-                    });
-                    
-                    let totalExpense = expensePersonal + expenseClub + expenseDebtGiven;
+                    let totalExpense = expensePersonal;
                     let netProfit = totalIncome - totalExpense;
                     
-                    // ========== ФОРМИРУЕМ CSV С ТАБЛИЦЕЙ ==========
+                    // ========== ФОРМИРУЕМ ОТЧЁТ ==========
                     let rows = [];
-                    // Заголовки
-                    rows.push(["Категория", "Подкатегория", "Сумма (₽)"]);
-                    // Доходы
-                    rows.push(["ДОХОДЫ", "Продажи товаров", incomeFromSales.toFixed(2)]);
-                    rows.push(["ДОХОДЫ", "Абонементы", incomeFromServices.toFixed(2)]);
-                    rows.push(["ДОХОДЫ", "Разовые продажи", incomeFromOnetime.toFixed(2)]);
-                    rows.push(["ИТОГО ДОХОДОВ", "", totalIncome.toFixed(2)]);
-                    rows.push([""]); // пустая строка
-                    // Расходы
-                    rows.push(["РАСХОДЫ", "Личное списание", expensePersonal.toFixed(2)]);
-                    rows.push(["РАСХОДЫ", "Клуб", expenseClub.toFixed(2)]);
-                    rows.push(["РАСХОДЫ", "Выданные долги", expenseDebtGiven.toFixed(2)]);
-                    rows.push(["ИТОГО РАСХОДОВ", "", totalExpense.toFixed(2)]);
-                    rows.push([""]); // пустая строка
-                    // Чистая прибыль
-                    rows.push(["ЧИСТАЯ ПРИБЫЛЬ", "", netProfit.toFixed(2)]);
+                    rows.push([`=== ОТЧЁТ ЗА ${monthNames[parseInt(monthNum) - 1]} ${year} ===`, "", "", ""]);
+                    rows.push([""]);
                     
-                    // Формируем CSV
-                    let csv = `"ОТЧЁТ ЗА ${monthNames[parseInt(monthNum) - 1]} ${year}"\n`;
+                    rows.push(["ДОХОДЫ", "", "Сумма (₽)", "Очки (VP)"]);
+                    rows.push(["", "Продажи товаров", incomeFromSales.toFixed(2), pointsFromSales.toFixed(2)]);
+                    rows.push(["", "Абонементы", incomeFromServices.toFixed(2), "0.00"]);
+                    rows.push(["", "Разовые продажи", incomeFromOnetime.toFixed(2), "0.00"]);
+                    rows.push(["ИТОГО ДОХОДОВ", "", totalIncome.toFixed(2), pointsFromSales.toFixed(2)]);
+                    rows.push([""]);
+                    
+                    rows.push(["РАСХОДЫ", "", "Сумма (₽)", "Очки (VP)"]);
+                    rows.push(["", "Личное списание", expensePersonal.toFixed(2), pointsPersonal.toFixed(2)]);
+                    rows.push(["ИТОГО РАСХОДОВ", "", totalExpense.toFixed(2), pointsPersonal.toFixed(2)]);
+                    rows.push([""]);
+                    
+                    rows.push(["ЧИСТАЯ ПРИБЫЛЬ", "", netProfit.toFixed(2), (pointsFromSales - pointsPersonal).toFixed(2)]);
+                    
+                    // Формируем CSV с расширением .xls
+                    let csv = "";
                     rows.forEach(row => {
                         csv += row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(",") + "\n";
                     });
                     
-                    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+                    const blob = new Blob(["\uFEFF" + csv], { type: "application/vnd.ms-excel" });
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(blob);
-                    link.download = `отчёт_${month}.csv`;
+                    link.download = `отчёт_${month}.xls`;
                     link.click();
                     URL.revokeObjectURL(link.href);
                     alert(`✅ Отчёт за ${month} выгружен!`);
