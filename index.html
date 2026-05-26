@@ -786,7 +786,7 @@
         document.querySelectorAll('.pay-debt-btn').forEach(btn => btn.onclick = () => payDebt(parseInt(btn.dataset.id)));
     }
     
-    // ======================= EXCEL ВЫГРУЗКИ =======================
+    // ======================= EXCEL ВЫГРУЗКИ С ИТОГАМИ =======================
     function downloadCSV(filename, rows, headers, totals = null) {
         let csv = headers.join(",") + "\n";
         rows.forEach(row => { csv += row.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",") + "\n"; });
@@ -805,6 +805,10 @@
         let totalSum = 0, totalIncome = 0;
         rows.forEach(r => { totalSum += parseFloat(r[2]); totalIncome += parseFloat(r[3]); });
         rows.push(["ИТОГО","",totalSum.toFixed(2),totalIncome.toFixed(2)]);
+        rows.push(["","","",""]);
+        rows.push(["=== ОБЩИЙ ОБОРОТ ДЕНЕГ ===","","",""]);
+        rows.push(["Оборот денег (все поступления)", "", totalSum.toFixed(2), ""]);
+        rows.push(["Ваш доход", "", totalIncome.toFixed(2), ""]);
         downloadCSV("абонементы.csv", rows, ["Дата","Клиент","Сумма","Доход"]);
     }
     
@@ -814,6 +818,10 @@
         let totalSum = 0, totalIncome = 0;
         rows.forEach(r => { totalSum += parseFloat(r[2]); totalIncome += parseFloat(r[3]); });
         rows.push(["ИТОГО","",totalSum.toFixed(2),totalIncome.toFixed(2)]);
+        rows.push(["","","",""]);
+        rows.push(["=== ОБЩИЙ ОБОРОТ ДЕНЕГ ===","","",""]);
+        rows.push(["Оборот денег (все поступления)", "", totalSum.toFixed(2), ""]);
+        rows.push(["Ваш доход", "", totalIncome.toFixed(2), ""]);
         downloadCSV("разовые_продажи.csv", rows, ["Дата","Клиент","Сумма","Доход"]);
     }
     
@@ -822,7 +830,10 @@
         if(!rows.length) { alert("Нет активных долгов"); return; }
         let totalQty=0, totalVp=0, totalSum=0, totalDebt=0;
         rows.forEach(r => { totalQty += r[4]; totalVp += parseFloat(r[6]); totalSum += parseFloat(r[8]); totalDebt += parseFloat(r[9]); });
-        downloadCSV("долги.csv", rows, ["Дата","Клиент","Скидка","Товар","Кол-во","VP шт","VP общий","Цена со скидкой","Сумма","Остаток долга"], ["ИТОГО","","","",totalQty,"",totalVp.toFixed(2),"",totalSum.toFixed(2),totalDebt.toFixed(2)]);
+        rows.push(["ИТОГО","","","",totalQty,"",totalVp.toFixed(2),"",totalSum.toFixed(2),totalDebt.toFixed(2)]);
+        rows.push(["","","","","","","","","",""]);
+        rows.push(["=== ОБЩАЯ СУММА АКТИВНЫХ ДОЛГОВ ===","","","","","","","","",totalDebt.toFixed(2)]);
+        downloadCSV("долги.csv", rows, ["Дата","Клиент","Скидка","Товар","Кол-во","VP шт","VP общий","Цена со скидкой","Сумма","Остаток долга"]);
     }
     
     function exportStock() {
@@ -830,7 +841,12 @@
         if(!rows.length) { alert("Нет товаров"); return; }
         let totalQty=0, totalVp=0, totalSv=0, totalRet=0;
         rows.forEach(r => { totalQty += r[2]; totalVp += parseFloat(r[4]); totalSv += parseFloat(r[7]); totalRet += parseFloat(r[8]); });
-        downloadCSV("остатки_склада.csv", rows, ["Товар","SKU","Кол-во","VP шт","VP общий","Цена СВ","Розница","Общая СВ","Общая розница"], ["ИТОГО","",totalQty,"",totalVp.toFixed(2),"","",totalSv.toFixed(2),totalRet.toFixed(2)]);
+        rows.push(["ИТОГО","",totalQty,"",totalVp.toFixed(2),"","",totalSv.toFixed(2),totalRet.toFixed(2)]);
+        rows.push(["","","","","","","","",""]);
+        rows.push(["=== ОБЩАЯ СТОИМОСТЬ СКЛАДА ===","","","","","","","",""]);
+        rows.push(["Общая стоимость по закупке (СВ)", "", "", "", "", "", "", "", totalSv.toFixed(2)]);
+        rows.push(["Общая стоимость по рознице", "", "", "", "", "", "", "", totalRet.toFixed(2)]);
+        downloadCSV("остатки_склада.csv", rows, ["Товар","SKU","Кол-во","VP шт","VP общий","Цена СВ","Розница","Общая СВ","Общая розница"]);
     }
     
     function exportIncome() {
@@ -838,7 +854,12 @@
         if(!rows.length) { alert("Нет приходов"); return; }
         let totalQty=0, totalVp=0, totalSv=0, totalRet=0;
         rows.forEach(r => { totalQty += r[2]; totalVp += parseFloat(r[4]); totalSv += parseFloat(r[7]); totalRet += parseFloat(r[8]); });
-        downloadCSV("приходы.csv", rows, ["Дата","Товар","Кол-во","VP шт","VP общий","Цена СВ","Розница","Сумма СВ","Сумма розница"], ["ИТОГО","",totalQty,"",totalVp.toFixed(2),"","",totalSv.toFixed(2),totalRet.toFixed(2)]);
+        rows.push(["ИТОГО","",totalQty,"",totalVp.toFixed(2),"","",totalSv.toFixed(2),totalRet.toFixed(2)]);
+        rows.push(["","","","","","","","",""]);
+        rows.push(["=== ОБЩАЯ СУММА ЗАКУПОК ===","","","","","","","",""]);
+        rows.push(["Общая сумма закупок (СВ)", "", "", "", "", "", "", "", totalSv.toFixed(2)]);
+        rows.push(["Общая розничная стоимость прихода", "", "", "", "", "", "", "", totalRet.toFixed(2)]);
+        downloadCSV("приходы.csv", rows, ["Дата","Товар","Кол-во","VP шт","VP общий","Цена СВ","Розница","Сумма СВ","Сумма розница"]);
     }
     
     function exportSale() {
@@ -908,8 +929,11 @@
             allSum += parseFloat(r[8]); 
             allIncome += parseFloat(r[9]); 
         });
-        csv += `"=== ОБЩИЙ ДОХОД ===\n"`;
-        csv += `"ИТОГО","","","",${allQty},"",${allVp.toFixed(2)},"",${allSum.toFixed(2)},${allIncome.toFixed(2)}\n`;
+        csv += `"=== ОБЩИЙ ОБОРОТ ДЕНЕГ ===\n"`;
+        csv += `"Показатель","Сумма"\n`;
+        csv += `"Оборот денег (все поступления)",${allSum.toFixed(2)}\n`;
+        csv += `"Общий доход (ваша прибыль)",${allIncome.toFixed(2)}\n`;
+        
         const blob = new Blob(["\uFEFF" + csv], {type: "text/csv;charset=utf-8;"});
         const link = document.createElement('a');
         link.href = URL.createObjectURL(blob);
@@ -923,7 +947,10 @@
         if(!rows.length) { alert("Нет личного списания"); return; }
         let totalQty=0, totalVp=0, totalSum=0;
         rows.forEach(r => { totalQty += r[2]; totalVp += parseFloat(r[4]); totalSum += parseFloat(r[5]); });
-        downloadCSV("личное_списание.csv", rows, ["Дата","Товар","Кол-во","VP шт","VP общий","Сумма (по СВ)"], ["ИТОГО","",totalQty,"",totalVp.toFixed(2),totalSum.toFixed(2)]);
+        rows.push(["ИТОГО","",totalQty,"",totalVp.toFixed(2),totalSum.toFixed(2)]);
+        rows.push(["","","","","",""]);
+        rows.push(["=== ОБЩАЯ СУММА СПИСАНИЙ (личное) ===","","","","",totalSum.toFixed(2)]);
+        downloadCSV("личное_списание.csv", rows, ["Дата","Товар","Кол-во","VP шт","VP общий","Сумма (по СВ)"]);
     }
     
     function exportClub() {
@@ -931,7 +958,10 @@
         if(!rows.length) { alert("Нет списания для клуба"); return; }
         let totalQty=0, totalVp=0, totalSum=0;
         rows.forEach(r => { totalQty += r[2]; totalVp += parseFloat(r[4]); totalSum += parseFloat(r[5]); });
-        downloadCSV("клуб_списание.csv", rows, ["Дата","Товар","Кол-во","VP шт","VP общий","Сумма (по СВ)"], ["ИТОГО","",totalQty,"",totalVp.toFixed(2),totalSum.toFixed(2)]);
+        rows.push(["ИТОГО","",totalQty,"",totalVp.toFixed(2),totalSum.toFixed(2)]);
+        rows.push(["","","","","",""]);
+        rows.push(["=== ОБЩАЯ СУММА СПИСАНИЙ (клуб) ===","","","","",totalSum.toFixed(2)]);
+        downloadCSV("клуб_списание.csv", rows, ["Дата","Товар","Кол-во","VP шт","VP общий","Сумма (по СВ)"]);
     }
     
     function exportExchange() {
@@ -951,6 +981,9 @@
         rows.push(["ОТДАЛ", "", "", totalGiveQty, "", totalGiveVp.toFixed(2), "", totalGiveSv.toFixed(2)]);
         rows.push(["ПОЛУЧИЛ", "", "", totalTakeQty, "", totalTakeVp.toFixed(2), "", totalTakeSv.toFixed(2)]);
         rows.push(["РАЗНИЦА", "", "", totalTakeQty - totalGiveQty, "", (totalTakeVp - totalGiveVp).toFixed(2), "", (totalTakeSv - totalGiveSv).toFixed(2)]);
+        rows.push(["","","","","","","",""]);
+        rows.push(["=== ОБЩАЯ СУММА ОБМЕНА ===","","","","","","",""]);
+        rows.push(["Оборот (отдал + получил)", "", "", totalGiveQty + totalTakeQty, "", (totalGiveVp + totalTakeVp).toFixed(2), "", (totalGiveSv + totalTakeSv).toFixed(2)]);
         downloadCSV("обмены.csv", rows, ["Дата","Тип","Товар","Кол-во","VP шт","VP общий","Цена СВ","Сумма СВ"]);
     }
     
@@ -991,6 +1024,9 @@
                 if (confirm(`Выгрузить отчёт за ${monthNames[parseInt(monthNum) - 1]} ${year}?`)) {
                     const ops = months[month];
                     let csv = '';
+                    let totalMonthTurnover = 0;
+                    let totalMonthIncome = 0;
+                    
                     // ПРИХОДЫ
                     let inc = ops.filter(o => o.type === "ПРИХОД");
                     if (inc.length) {
@@ -1020,6 +1056,8 @@
                         sale.forEach(o => {
                             o.items.forEach(i => {
                                 let income = getIncomeByDiscount(o.discountPercent, i.totalPrice);
+                                totalMonthTurnover += i.totalPrice;
+                                totalMonthIncome += income;
                                 csv += `"${o.date}","${o.clientName}","${o.discountPercent}%","${i.name}","${i.qty}","${(i.totalPoints / i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${(i.totalPrice / i.qty).toFixed(2)}","${i.totalPrice.toFixed(2)}","${income.toFixed(2)}"\n`;
                             });
                         });
@@ -1040,6 +1078,8 @@
                         csv += `"=== АБОНЕМЕНТЫ ===\n"`;
                         csv += `"Дата","Клиент","Сумма","Доход"\n`;
                         services.forEach(o => {
+                            totalMonthTurnover += o.totalSum;
+                            totalMonthIncome += o.totalIncome;
                             csv += `"${o.date}","${o.clientName || "Клиент"}","${o.totalSum.toFixed(2)}","${o.totalIncome.toFixed(2)}"\n`;
                         });
                         let totalSum = 0, totalIncome = 0;
@@ -1052,6 +1092,8 @@
                         csv += `"=== РАЗОВЫЕ ПРОДАЖИ ===\n"`;
                         csv += `"Дата","Клиент","Сумма","Доход"\n`;
                         onetimes.forEach(o => {
+                            totalMonthTurnover += o.totalSum;
+                            totalMonthIncome += o.totalIncome;
                             csv += `"${o.date}","${o.clientName || "Клиент"}","${o.totalSum.toFixed(2)}","${o.totalIncome.toFixed(2)}"\n`;
                         });
                         let totalSum = 0, totalIncome = 0;
@@ -1137,7 +1179,14 @@
                             csv += `"${p.name}","${p.sku}","${q}","${p.vp}","${(p.vp * q).toFixed(2)}","${p.svPrice}","${p.retail}","${(p.svPrice * q).toFixed(2)}","${(p.retail * q).toFixed(2)}"\n`;
                         }
                     });
-                    csv += `"ИТОГО","","${tq}","",${tvp.toFixed(2)},"","",${tsv.toFixed(2)},${tr.toFixed(2)}\n`;
+                    csv += `"ИТОГО","","${tq}","",${tvp.toFixed(2)},"","",${tsv.toFixed(2)},${tr.toFixed(2)}\n\n`;
+                    
+                    // ИТОГИ ЗА МЕСЯЦ
+                    csv += `"=== ИТОГО ЗА МЕСЯЦ ===\n"`;
+                    csv += `"Показатель","Сумма"\n`;
+                    csv += `"Оборот денег (все поступления)",${totalMonthTurnover.toFixed(2)}\n`;
+                    csv += `"Ваш доход",${totalMonthIncome.toFixed(2)}\n`;
+                    
                     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(blob);
