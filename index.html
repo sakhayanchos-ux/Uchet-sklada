@@ -80,6 +80,7 @@
         .contact-info { background: #E8F5E9; border-radius: 32px; padding: 16px; margin-top: 20px; text-align: center; border: 1px solid #A5D6A7; }
         .whatsapp-btn { background: #25D366; color: white; border: none; border-radius: 40px; padding: 12px 20px; font-size: 1rem; font-weight: bold; cursor: pointer; margin-top: 10px; width: 100%; }
         .pin-input { text-align: center; font-size: 1.5rem; letter-spacing: 10px; }
+        .summary-card { background: #E8F5E9; border-radius: 28px; padding: 12px; margin-top: 12px; text-align: center; }
     </style>
 </head>
 <body>
@@ -98,9 +99,6 @@
         </div>
         <input type="text" id="licenseKeyInput" placeholder="Введите ключ" style="width:100%; padding:12px; border-radius:30px; border:1px solid #DDCEFF; margin:10px 0; text-align:center;">
         <button class="btn btn-primary" id="activateBtn" style="margin-top:5px;">Активировать</button>
-        <div id="adminLoginPanel" style="margin-top:20px; border-top:1px solid #DDCEFF; padding-top:15px;">
-            <p style="font-size:0.7rem; color:#8A6DAD;"></p>
-        </div>
     </div>
     
     <div id="pinScreen" style="display:none; flex-direction:column; text-align:center; padding:20px;">
@@ -162,7 +160,8 @@
             <button class="btn btn-excel" id="exportDebtBtn">📊 Excel: Долги</button>
             <button class="btn btn-excel" id="exportServiceBtn">📊 Excel: Абонементы</button>
             <button class="btn btn-excel" id="exportOnetimeBtn">📊 Excel: Разовые продажи</button>
-            <button class="btn btn-excel" id="monthlyReportBtn">📊 Excel: Отчёты по месяцам</button>
+            <button class="btn btn-excel" id="monthlyReportBtn">📊 Excel: Полный отчёт</button>
+            <button class="btn btn-excel" id="summaryReportBtn">📊 Итоговый отчёт (доходы/расходы)</button>
         </div>
         <div class="backup-buttons">
             <button class="btn btn-primary" id="backupSaveBtn">💾 Резервная копия</button>
@@ -786,7 +785,7 @@
         document.querySelectorAll('.pay-debt-btn').forEach(btn => btn.onclick = () => payDebt(parseInt(btn.dataset.id)));
     }
     
-    // ======================= EXCEL ВЫГРУЗКИ С ИТОГАМИ =======================
+    // ======================= EXCEL ВЫГРУЗКИ =======================
     function downloadCSV(filename, rows, headers, totals = null) {
         let csv = headers.join(",") + "\n";
         rows.forEach(row => { csv += row.map(c => `"${String(c).replace(/"/g, '""')}"`).join(",") + "\n"; });
@@ -987,6 +986,121 @@
         downloadCSV("обмены.csv", rows, ["Дата","Тип","Товар","Кол-во","VP шт","VP общий","Цена СВ","Сумма СВ"]);
     }
     
+    // НОВАЯ ФУНКЦИЯ: итоговый финансовый отчёт (только доходы/расходы/прибыль)
+    function exportMonthlySummary() {
+        const months = {};
+        operations.forEach(op => {
+            let parts = op.date.split(',')[0].split('.');
+            if (parts.length === 3) {
+                let key = `${parts[2]}-${parts[1]}`;
+                if (!months[key]) months[key] = [];
+                months[key].push(op);
+            }
+        });
+        if (Object.keys(months).length === 0) {
+            alert("Нет данных ни за один месяц");
+            return;
+        }
+        let monthList = Object.keys(months).sort().reverse();
+        let html = '<div class="month-select">';
+        monthList.forEach(key => {
+            let [y, m] = key.split('-');
+            let monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+            html += `<button class="month-btn" data-month="${key}">${monthNames[parseInt(m) - 1]} ${y}</button>`;
+        });
+        html += '</div>';
+        const modalDiv = document.createElement('div');
+        modalDiv.className = 'modal-overlay';
+        modalDiv.innerHTML = `<div class="modal-card"><h3>📊 ИТОГОВЫЙ ФИНАНСОВЫЙ ОТЧЁТ</h3><p style="font-size:0.8rem; color:#666;">Доходы − Расходы = Чистая прибыль</p>${html}<div class="modal-buttons"><button class="btn" id="monthCancelBtn">Отмена</button></div></div>`;
+        document.body.appendChild(modalDiv);
+        setTimeout(() => modalDiv.classList.add('active'), 10);
+        
+        modalDiv.querySelectorAll('.month-btn').forEach(btn => {
+            btn.onclick = () => {
+                const month = btn.dataset.month;
+                if (!month) return;
+                const [year, monthNum] = month.split('-');
+                const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
+                if (confirm(`Выгрузить итоговый отчёт за ${monthNames[parseInt(monthNum) - 1]} ${year}?`)) {
+                    const ops = months[month];
+                    
+                    // ========== ДОХОДЫ ==========
+                    let incomeFromSales = 0;      // продажи товаров
+                    let incomeFromServices = 0;    // абонементы
+                    let incomeFromOnetime = 0;     // разовые продажи
+                    
+                    ops.forEach(o => {
+                        if (o.type === "ПРОДАЖА") incomeFromSales += o.totalIncome || 0;
+                        else if (o.type === "АБОНЕМЕНТ") incomeFromServices += o.totalIncome || 0;
+                        else if (o.type === "РАЗОВАЯ ПРОДАЖА") incomeFromOnetime += o.totalIncome || 0;
+                    });
+                    
+                    let totalIncome = incomeFromSales + incomeFromServices + incomeFromOnetime;
+                    
+                    // ========== РАСХОДЫ ==========
+                    let expensePersonal = 0;   // личное списание (по СВ)
+                    let expenseClub = 0;        // клуб (по СВ)
+                    
+                    ops.forEach(o => {
+                        if (o.type === "ЛИЧНОЕ") {
+                            o.items.forEach(item => { expensePersonal += item.svPrice * item.qty; });
+                        }
+                        else if (o.type === "КЛУБ") {
+                            o.items.forEach(item => { expenseClub += item.svPrice * item.qty; });
+                        }
+                    });
+                    
+                    let totalExpense = expensePersonal + expenseClub;
+                    let netProfit = totalIncome - totalExpense;
+                    
+                    // ========== ДОЛГИ (выданные за месяц и активные) ==========
+                    let debtGivenThisMonth = 0;
+                    ops.forEach(o => {
+                        if (o.type === "ДОЛГ") debtGivenThisMonth += o.totalSum || 0;
+                    });
+                    
+                    let activeDebts = ops.filter(o => o.type === "ДОЛГ" && o.debtRemaining > 0);
+                    let totalActiveDebts = activeDebts.reduce((sum, o) => sum + (o.debtRemaining || 0), 0);
+                    
+                    // ========== ФОРМИРУЕМ CSV ==========
+                    let csv = `"=== ИТОГОВЫЙ ФИНАНСОВЫЙ ОТЧЁТ ЗА ${monthNames[parseInt(monthNum) - 1]} ${year} ===\n\n`;
+                    csv += `"Категория","Подкатегория","Сумма (₽)"\n`;
+                    csv += `"ДОХОДЫ","Продажи товаров",${incomeFromSales.toFixed(2)}\n`;
+                    csv += `"ДОХОДЫ","Абонементы",${incomeFromServices.toFixed(2)}\n`;
+                    csv += `"ДОХОДЫ","Разовые продажи",${incomeFromOnetime.toFixed(2)}\n`;
+                    csv += `"ИТОГО ДОХОДОВ","",${totalIncome.toFixed(2)}\n\n`;
+                    
+                    csv += `"РАСХОДЫ","Личное списание (по СВ)",${expensePersonal.toFixed(2)}\n`;
+                    csv += `"РАСХОДЫ","Клуб (по СВ)",${expenseClub.toFixed(2)}\n`;
+                    csv += `"ИТОГО РАСХОДОВ","",${totalExpense.toFixed(2)}\n\n`;
+                    
+                    csv += `"ЧИСТАЯ ПРИБЫЛЬ","",${netProfit.toFixed(2)}\n\n`;
+                    
+                    csv += `"ДОПОЛНИТЕЛЬНО","Выдано долгов за месяц",${debtGivenThisMonth.toFixed(2)}\n`;
+                    csv += `"ДОПОЛНИТЕЛЬНО","Активные долги на конец месяца",${totalActiveDebts.toFixed(2)}\n`;
+                    
+                    if (activeDebts.length > 0) {
+                        csv += `\n"СПИСОК АКТИВНЫХ ДОЛГОВ","",""\n`;
+                        csv += `"Должник","Остаток долга (₽)","Дата выдачи"\n`;
+                        activeDebts.forEach(o => {
+                            csv += `"${o.clientName || "Должник"}","${(o.debtRemaining || 0).toFixed(2)}","${o.date}"\n`;
+                        });
+                    }
+                    
+                    const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
+                    const link = document.createElement('a');
+                    link.href = URL.createObjectURL(blob);
+                    link.download = `финансовый_отчёт_${month}.csv`;
+                    link.click();
+                    URL.revokeObjectURL(link.href);
+                    alert(`✅ Итоговый финансовый отчёт за ${month} выгружен!`);
+                    modalDiv.remove();
+                }
+            };
+        });
+        modalDiv.querySelector('#monthCancelBtn').onclick = () => modalDiv.remove();
+    }
+    
     function exportMonthlyReport() {
         const months = {};
         operations.forEach(op => {
@@ -1021,13 +1135,10 @@
                 if (!month) return;
                 const [year, monthNum] = month.split('-');
                 const monthNames = ['Январь', 'Февраль', 'Март', 'Апрель', 'Май', 'Июнь', 'Июль', 'Август', 'Сентябрь', 'Октябрь', 'Ноябрь', 'Декабрь'];
-                if (confirm(`Выгрузить отчёт за ${monthNames[parseInt(monthNum) - 1]} ${year}?`)) {
+                if (confirm(`Выгрузить полный отчёт за ${monthNames[parseInt(monthNum) - 1]} ${year}?`)) {
                     const ops = months[month];
                     let csv = '';
-                    let totalMonthTurnover = 0;
-                    let totalMonthIncome = 0;
                     
-                    // ПРИХОДЫ
                     let inc = ops.filter(o => o.type === "ПРИХОД");
                     if (inc.length) {
                         csv += `"=== ПРИХОДЫ ===\n"`;
@@ -1048,7 +1159,7 @@
                         });
                         csv += `"ИТОГО","","${tq}","","${tvp.toFixed(2)}","","","${tsv.toFixed(2)}","${tr.toFixed(2)}"\n\n`;
                     }
-                    // ПРОДАЖИ товаров
+                    
                     let sale = ops.filter(o => o.type === "ПРОДАЖА");
                     if (sale.length) {
                         csv += `"=== ПРОДАЖИ ТОВАРОВ ===\n"`;
@@ -1056,8 +1167,6 @@
                         sale.forEach(o => {
                             o.items.forEach(i => {
                                 let income = getIncomeByDiscount(o.discountPercent, i.totalPrice);
-                                totalMonthTurnover += i.totalPrice;
-                                totalMonthIncome += income;
                                 csv += `"${o.date}","${o.clientName}","${o.discountPercent}%","${i.name}","${i.qty}","${(i.totalPoints / i.qty).toFixed(2)}","${i.totalPoints.toFixed(2)}","${(i.totalPrice / i.qty).toFixed(2)}","${i.totalPrice.toFixed(2)}","${income.toFixed(2)}"\n`;
                             });
                         });
@@ -1072,35 +1181,31 @@
                         });
                         csv += `"ИТОГО","","","",${tq},"",${tvp.toFixed(2)},"",${ts.toFixed(2)},${ti.toFixed(2)}\n\n`;
                     }
-                    // АБОНЕМЕНТЫ
+                    
                     let services = ops.filter(o => o.type === "АБОНЕМЕНТ");
                     if (services.length) {
                         csv += `"=== АБОНЕМЕНТЫ ===\n"`;
                         csv += `"Дата","Клиент","Сумма","Доход"\n`;
                         services.forEach(o => {
-                            totalMonthTurnover += o.totalSum;
-                            totalMonthIncome += o.totalIncome;
                             csv += `"${o.date}","${o.clientName || "Клиент"}","${o.totalSum.toFixed(2)}","${o.totalIncome.toFixed(2)}"\n`;
                         });
                         let totalSum = 0, totalIncome = 0;
                         services.forEach(o => { totalSum += o.totalSum; totalIncome += o.totalIncome; });
                         csv += `"ИТОГО","",${totalSum.toFixed(2)},${totalIncome.toFixed(2)}\n\n`;
                     }
-                    // РАЗОВЫЕ ПРОДАЖИ
+                    
                     let onetimes = ops.filter(o => o.type === "РАЗОВАЯ ПРОДАЖА");
                     if (onetimes.length) {
                         csv += `"=== РАЗОВЫЕ ПРОДАЖИ ===\n"`;
                         csv += `"Дата","Клиент","Сумма","Доход"\n`;
                         onetimes.forEach(o => {
-                            totalMonthTurnover += o.totalSum;
-                            totalMonthIncome += o.totalIncome;
                             csv += `"${o.date}","${o.clientName || "Клиент"}","${o.totalSum.toFixed(2)}","${o.totalIncome.toFixed(2)}"\n`;
                         });
                         let totalSum = 0, totalIncome = 0;
                         onetimes.forEach(o => { totalSum += o.totalSum; totalIncome += o.totalIncome; });
                         csv += `"ИТОГО","",${totalSum.toFixed(2)},${totalIncome.toFixed(2)}\n\n`;
                     }
-                    // ЛИЧНОЕ
+                    
                     let pers = ops.filter(o => o.type === "ЛИЧНОЕ");
                     if (pers.length) {
                         csv += `"=== ЛИЧНОЕ ===\n"`;
@@ -1120,7 +1225,7 @@
                         });
                         csv += `"ИТОГО","","${tq}","",${tvp.toFixed(2)},"${ts.toFixed(2)}"\n\n`;
                     }
-                    // КЛУБ
+                    
                     let club = ops.filter(o => o.type === "КЛУБ");
                     if (club.length) {
                         csv += `"=== КЛУБ ===\n"`;
@@ -1140,7 +1245,7 @@
                         });
                         csv += `"ИТОГО","","${tq}","",${tvp.toFixed(2)},"${ts.toFixed(2)}"\n\n`;
                     }
-                    // ОБМЕН
+                    
                     let exch = ops.filter(o => o.type === "ОБМЕН");
                     if (exch.length) {
                         csv += `"=== ОБМЕН ===\n"`;
@@ -1165,7 +1270,7 @@
                         csv += `"ИТОГО ПОЛУЧИЛ","","","${takeQ}","",${takeVp.toFixed(2)},"${takeSv.toFixed(2)}"\n`;
                         csv += `"РАЗНИЦА","","","${takeQ - giveQ}","",${(takeVp - giveVp).toFixed(2)},"${(takeSv - giveSv).toFixed(2)}"\n\n`;
                     }
-                    // ОСТАТКИ
+                    
                     csv += `"=== ОСТАТКИ (текущие) ===\n"`;
                     csv += `"Товар","SKU","Кол-во","VP шт","VP общий","Цена СВ","Розница","Общая СВ","Общая розница"\n`;
                     let tq = 0, tvp = 0, tsv = 0, tr = 0;
@@ -1179,21 +1284,15 @@
                             csv += `"${p.name}","${p.sku}","${q}","${p.vp}","${(p.vp * q).toFixed(2)}","${p.svPrice}","${p.retail}","${(p.svPrice * q).toFixed(2)}","${(p.retail * q).toFixed(2)}"\n`;
                         }
                     });
-                    csv += `"ИТОГО","","${tq}","",${tvp.toFixed(2)},"","",${tsv.toFixed(2)},${tr.toFixed(2)}\n\n`;
-                    
-                    // ИТОГИ ЗА МЕСЯЦ
-                    csv += `"=== ИТОГО ЗА МЕСЯЦ ===\n"`;
-                    csv += `"Показатель","Сумма"\n`;
-                    csv += `"Оборот денег (все поступления)",${totalMonthTurnover.toFixed(2)}\n`;
-                    csv += `"Ваш доход",${totalMonthIncome.toFixed(2)}\n`;
+                    csv += `"ИТОГО","","${tq}","",${tvp.toFixed(2)},"","",${tsv.toFixed(2)},${tr.toFixed(2)}\n`;
                     
                     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
                     const link = document.createElement('a');
                     link.href = URL.createObjectURL(blob);
-                    link.download = `отчёт_${month}.csv`;
+                    link.download = `полный_отчёт_${month}.csv`;
                     link.click();
                     URL.revokeObjectURL(link.href);
-                    alert(`✅ Отчёт за ${month} выгружен`);
+                    alert(`✅ Полный отчёт за ${month} выгружен`);
                     modalDiv.remove();
                 }
             };
@@ -1276,6 +1375,7 @@
     document.getElementById('exportServiceBtn')?.addEventListener('click', exportService);
     document.getElementById('exportOnetimeBtn')?.addEventListener('click', exportOnetime);
     document.getElementById('monthlyReportBtn')?.addEventListener('click', exportMonthlyReport);
+    document.getElementById('summaryReportBtn')?.addEventListener('click', exportMonthlySummary);
     document.getElementById('backupSaveBtn')?.addEventListener('click', backupSave);
     document.getElementById('backupLoadBtn')?.addEventListener('click', backupLoad);
     document.getElementById('searchInput')?.addEventListener('input', () => renderProducts());
