@@ -1021,12 +1021,13 @@
                     });
 
                     // 5. Готовим Blob и отдаём на загрузку с BOM для кириллицы
-                    const blob = new Blob(["\uFEFF" + csv], { type: "application/vnd.ms-excel" });
-                    const link = document.createElement('a');
-                    link.href = URL.createObjectURL(blob);
-                    link.download = `отчёт_${month}.xls`;
-                    link.click();
-                    setTimeout(() => URL.revokeObjectURL(link.href), 100);
+                    const blob = new Blob(["\uFEFF" + csv], {type: "application/vnd.ms-excel"});
+const link = document.createElement('a');
+link.href = URL.createObjectURL(blob);
+// Автоматически меняем расширение на .xls, если не указано явно
+link.download = filename.endsWith('.xls') ? filename : filename.replace('.csv','.xls');
+link.click();
+setTimeout(() => URL.revokeObjectURL(link.href), 100);
                     alert(`✅ Отчёт за ${monthNames[parseInt(monthNum)-1]} ${year} выгружен!`);
                     modalDiv.remove();
                 }
