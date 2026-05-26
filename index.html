@@ -907,7 +907,7 @@
         downloadCSV("обмены.csv", rows, ["Дата","Тип","Товар","Кол-во","VP шт","VP общий","Цена СВ","Сумма СВ"]);
     }
     
-    // ======================= НОВЫЙ МЕСЯЧНЫЙ ОТЧЁТ (ТОЛЬКО ИТОГИ) =======================
+       // ======================= НОВЫЙ МЕСЯЧНЫЙ ОТЧЁТ (ТОЛЬКО ИТОГИ - ТАБЛИЦА) =======================
     function exportMonthlySummary() {
         const months = {};
         operations.forEach(op => {
@@ -994,20 +994,30 @@
                     let totalExpense = expensePersonal + expenseClub + expenseDebtGiven;
                     let netProfit = totalIncome - totalExpense;
                     
-                    // ========== ФОРМИРУЕМ CSV ==========
-                    let csv = `"=== ОТЧЁТ ЗА ${monthNames[parseInt(monthNum) - 1]} ${year} ===\n\n`;
-                    csv += `"Категория","Подкатегория","Сумма (₽)"\n`;
-                    csv += `"ДОХОДЫ","Продажи товаров",${incomeFromSales.toFixed(2)}\n`;
-                    csv += `"ДОХОДЫ","Абонементы",${incomeFromServices.toFixed(2)}\n`;
-                    csv += `"ДОХОДЫ","Разовые продажи",${incomeFromOnetime.toFixed(2)}\n`;
-                    csv += `"ИТОГО ДОХОДОВ","",${totalIncome.toFixed(2)}\n\n`;
+                    // ========== ФОРМИРУЕМ CSV С ТАБЛИЦЕЙ ==========
+                    let rows = [];
+                    // Заголовки
+                    rows.push(["Категория", "Подкатегория", "Сумма (₽)"]);
+                    // Доходы
+                    rows.push(["ДОХОДЫ", "Продажи товаров", incomeFromSales.toFixed(2)]);
+                    rows.push(["ДОХОДЫ", "Абонементы", incomeFromServices.toFixed(2)]);
+                    rows.push(["ДОХОДЫ", "Разовые продажи", incomeFromOnetime.toFixed(2)]);
+                    rows.push(["ИТОГО ДОХОДОВ", "", totalIncome.toFixed(2)]);
+                    rows.push([""]); // пустая строка
+                    // Расходы
+                    rows.push(["РАСХОДЫ", "Личное списание", expensePersonal.toFixed(2)]);
+                    rows.push(["РАСХОДЫ", "Клуб", expenseClub.toFixed(2)]);
+                    rows.push(["РАСХОДЫ", "Выданные долги", expenseDebtGiven.toFixed(2)]);
+                    rows.push(["ИТОГО РАСХОДОВ", "", totalExpense.toFixed(2)]);
+                    rows.push([""]); // пустая строка
+                    // Чистая прибыль
+                    rows.push(["ЧИСТАЯ ПРИБЫЛЬ", "", netProfit.toFixed(2)]);
                     
-                    csv += `"РАСХОДЫ","Личное списание",${expensePersonal.toFixed(2)}\n`;
-                    csv += `"РАСХОДЫ","Клуб",${expenseClub.toFixed(2)}\n`;
-                    csv += `"РАСХОДЫ","Выданные долги",${expenseDebtGiven.toFixed(2)}\n`;
-                    csv += `"ИТОГО РАСХОДОВ","",${totalExpense.toFixed(2)}\n\n`;
-                    
-                    csv += `"ЧИСТАЯ ПРИБЫЛЬ","",${netProfit.toFixed(2)}\n`;
+                    // Формируем CSV
+                    let csv = `"ОТЧЁТ ЗА ${monthNames[parseInt(monthNum) - 1]} ${year}"\n`;
+                    rows.forEach(row => {
+                        csv += row.map(cell => `"${String(cell || '').replace(/"/g, '""')}"`).join(",") + "\n";
+                    });
                     
                     const blob = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8;" });
                     const link = document.createElement('a');
