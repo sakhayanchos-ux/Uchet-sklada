@@ -359,6 +359,7 @@
         if(savedOps) operations = JSON.parse(savedOps);
         retailIncomeTotal = parseFloat(localStorage.getItem("retail_income")) || 0;
         companyCheckTotal = parseFloat(localStorage.getItem("company_check")) || 0;
+        checkNewMonth();
     }
     function saveAll() {
         localStorage.setItem("herba_stock", JSON.stringify(stock));
@@ -1127,7 +1128,24 @@
             renderHistory();
         }
     }
-    
+        // ======================= АВТОМАТИЧЕСКОЕ ОБНУЛЕНИЕ ДОХОДОВ ПРИ НОВОМ МЕСЯЦЕ =======================
+    function checkNewMonth() {
+        let lastMonth = localStorage.getItem("last_month");
+        let now = new Date();
+        let currentMonth = `${now.getFullYear()}-${(now.getMonth() + 1).toString().padStart(2, '0')}`;
+        
+        if (!lastMonth) {
+            // Первый запуск — сохраняем текущий месяц
+            localStorage.setItem("last_month", currentMonth);
+        } else if (lastMonth !== currentMonth) {
+            // Месяц изменился — обнуляем доходы
+            retailIncomeTotal = 0;
+            companyCheckTotal = 0;
+            saveAll();
+            localStorage.setItem("last_month", currentMonth);
+            console.log("Новый месяц! Доходы обнулены.");
+        }
+    }
     // ======================= НАЗНАЧЕНИЕ КНОПОК =======================
     document.getElementById('incomeMassBtn')?.addEventListener('click', showMassIncome);
     document.getElementById('saleMassBtn')?.addEventListener('click', showMassSale);
